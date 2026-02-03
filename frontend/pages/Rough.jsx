@@ -1,0 +1,102 @@
+import React from "react";
+
+const queries = () => {
+    let query='';
+    const main='ordered'
+    const category='all'
+
+    const initialQueryMain = `
+            SELECT i.item_id, i.name, i.category, i.liked,`;
+    const thumbQuery = `
+            (SELECT th.image FROM thumbnails th 
+                WHERE th.item_id=i.item_id 
+                ORDER BY th.item_id LIMIT 1) AS thumbnail,`;
+    const infoQueryMain =  `
+                (SELECT json_build_object(
+                    'info_id', inf.info_id,
+                    'qty', inf.qty,
+                    'cost', inf.cost,
+                    'details', inf.details
+                )                
+                `;
+    const fromQueryMain=` FROM infos inf WHERE inf.item_id=i.item_id ORDER BY inf.item_id LIMIT 1) AS info  `
+    const whereQueryMain = `FROM items i LEFT JOIN infos inf ON inf.item_id=i.item_id`;
+    const categoryQueryMain = ` WHERE i.category ILIKE'%${category}%'`
+    const orderQueryMain = ` ORDER BY i.item_id`;
+
+
+    //like queries
+    const initialQuerylike = ` 
+        SELECT i.item_id, i.name, i.category, i.liked,
+        i.created_at::date AS date, i.created_at::time AS time, i.liked,`;
+    const objectQueryLike = ` 
+        json_build_object(
+            'date', o.created_at::date,
+            'time', o.created_at::time
+        ) AS order `;
+    const fromQueryLike = ` 
+        FROM items i 
+        LEFT JOIN orders o ON o.item_id=i.item_id`
+    const whereQueryLike = ` WHERE i.liked=true `
+    const categoryQueryLike=`AND i.category ILIKE '%${category}%'`
+    const orderQueryLike=` ORDER BY i.created_at ASC`;
+
+
+    //ordered queries
+    const infoQueryOrdered =  `
+        (
+            SELECT json_build_object(
+                'cost', inf.cost,
+                'details', inf. details
+        )
+        FROM infos inf WHERE inf.info_id=o.info_id) AS info,`
+
+    const objectQueryordered = `
+        json_build_object(
+            'order_id', o.order_id,
+            'order_qty', o.order_qty,
+            'date', o.created_at::date,
+            'time', o.created_at::time
+        )  AS order`
+    const orderQueryOrdered = `
+            ORDER BY o.created_at ASC ;`
+
+        //main conditions
+    if(main ==='main') query+=initialQueryMain;
+    if(main==='main') query+=thumbQuery;
+    if(main==='main') query+=infoQueryMain;
+    if(main==='main') query+=fromQueryMain
+    if(main==='main') query+=whereQueryMain;
+    if (category !== 'all' && main ==='main') query+=categoryQueryMain;
+    if(main==='main') query+=orderQueryMain;
+
+
+        //like conditions
+    if(main ==='liked') query+=initialQuerylike;
+    if(main==='liked') query+=infoQueryMain;
+    if(main==='liked') {
+        query+='FROM infos inf WHERE inf.item_id=i.item_id ORDER BY inf.info_id LIMIT 1) AS info,'
+    }
+    if(main==='liked') query+=objectQueryLike;
+    if(main==='liked') query+=fromQueryLike;
+    if(main==='liked') query+=whereQueryLike
+    if(category !=='all' && main==='liked') query+=categoryQueryLike
+    if(main==='liked') query+=orderQueryLike
+
+        //ordered conditions
+    if(main ==='ordered') query+=initialQuerylike
+    if(main==='ordered') query+=infoQueryOrdered
+    if(main==='ordered') query+=objectQueryordered
+    if(main==='ordered') query+=fromQueryLike
+    if (category !== 'all' && main ==='ordered') query+=categoryQueryMain;
+    if(main==='ordered') query+=orderQueryOrdered
+
+    
+    return(
+        <div className="h-scree w-screen text-3xl bg-red-300 text-black px-5">
+            {query}
+        </div>
+    )
+}
+
+export default queries
