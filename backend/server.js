@@ -3,6 +3,9 @@ import cors from 'cors'
 import itemRoutes from "./routes/items.js"
 import likedRoutes from "./Routes/liked.js"
 import ordersRoutes from "./Routes/orders.js"
+import categoriesRoutes from "./Routes/categories.js"
+
+// import categoriesRoutes from "./Routes/categories.js"
 
 import dotenv from 'dotenv'
 dotenv.config();
@@ -21,6 +24,8 @@ app.get('/', (req,res)=>{
 app.use("/api/items", itemRoutes)
 app.use("/api/liked", likedRoutes)
 app.use("/api/orders", ordersRoutes)
+app.use("/api/categories", categoriesRoutes)
+
 
 app.listen(PORT, ()=>{
     console.log(`Server is listening at port ${PORT}`);

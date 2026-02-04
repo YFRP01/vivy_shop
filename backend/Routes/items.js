@@ -196,12 +196,6 @@ router.get('/:id', async (req, res) => {
 });
 
 
-/*
--------------------------------
- Edit
--------------------------------
-*/
-
 //edit items from dev dashboard
 router.put('/:id', async (req, res)=>{
     const {id} = req.params;

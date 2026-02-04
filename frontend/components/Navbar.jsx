@@ -1,41 +1,80 @@
-import { Heart, Home, Menu, PilcrowLeft, Plus, Search, X } from 'lucide-react'
+ import { Heart, Home, Menu, PilcrowLeft, Plus, Search, X } from 'lucide-react'
 import React from 'react'
+import { useEffect } from 'react';
 import { useState } from 'react'
+import { API_URL } from '../api.js';
+import axios from 'axios';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
 
 const Navbar = () => {
 
-    const [notification, setNotificatio] = useState();
+    const [notification, setNotification] = useState(2);
+    const [inputValue, setInputValue] = useState('')
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [selectedCat, setSelectedCat] = useState('')
+    const [categories, setCategories] = useState([])
+    const [searchParams, setsearchParams] = useSearchParams()
+    const [placeholderValue, setPlaceholder] = useState('Search for an item ...')
+    const navigate = useNavigate()
 
+    const main = searchParams.get('main') || main;
+    const category = searchParams.get('category') || 'all';
+    const handleCategory = (category)=>{
+        setSelectedCat(category)
+        setPlaceholder(`Category : ${category}`)
+        setsearchParams({main, category:category})
+    }
+    
+    const handleSearch = ()=>{
+
+    }
+
+    const getAllCategories = async ()=>{
+        try {
+            const res = await axios.get(`${API_URL}/categories`);
+            setCategories(res.data)
+        } catch (error) {
+            console.log(error.message)
+        }
+    }
+
+    useEffect(() => {
+      getAllCategories();
+    }, []);
+
+    
   return (
-    <nav className='sticky z-50 top-0 left-0 right-0 transition-all duration-300 bg-[#066e3b]'>
+    <nav className='fixed z-50 w-full top-0 left-0 right-0 transition-all duration-700 ease-in-out '>
         {/* Top nav */}
-        <div className='flex items-center justify-between p-2 px-5'>
-            <div className='flex items-center gap-2.5 text-white font-bold text-2xl'>
+        <div className='sticky w-full flex items-center z-1 justify-between p-2 px-5 bg-[#066e3b]'>
+            <div onClick={()=>(navigate(`/?main=${main}&category=${category}`))} className='flex items-center cursor-pointer gap-2.5 text-white font-bold text-2xl'>
                 {/* <Home className='w-7 h-7 text-[#10b981]' /> */}
                 <span>LOGO</span>
             </div>
             <div className='relative flex items-center group flex-1 p-2 px-5'>
                <div className='flex justify-center items-center w-full'>
                     <input
-                    value={''}
-                    onChange={'s'}
-                    placeholder='Search for an item ...'
-                    onKeyDown={'s'}
+                    value={inputValue}
+                    onChange={(e)=>(setInputValue(e.target.value))}
+                    placeholder={placeholderValue}
+                    onKeyDown={handleSearch(inputValue)}
                     className='bg-white px-9 py-2 text-sm rounded-full w-full focus:border border-[#04aaa4] focus:ring-2 focus:ring-[#13aaa3] outline-none ' />
                 </div> 
                 <button className='absolute left-8 text-gray-900/80 group-focus-within:text-gray-900/60 transition-colors duration-300 ease-out'>
                     <Search className='w-4 h-4' />
                 </button>
-                <button className='absolute right-8 text-gray-900 group-focus-within:text-gray-900/70 transition-colors duration-300 ease-out'>
-                    <X className='w-3 h-3'/>
-                </button>
+                {inputValue && (
+                    <button onClick={()=>(setInputValue(''))} className='absolute right-9 text-gray-900 group-focus-within:text-gray-900/70 transition-colors duration-300 ease-out'>
+                        <X className='w-3 h-3'/>
+                    </button>
+                )}
             </div>
-            <div className='bg-green-100/20 flex gap-4 items-center p-2 rounded-xl'>
-                <div className='p-1 rounded-full backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
-                    <div className='relative'>
+            <div className='bg-green-100/20 flex gap-2 items-center p-2 rounded-xl'>
+                <button onClick={()=>(navigate('/liked'))} className='p-1 relative rounded-full flex items-center justify-center backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
                         <Heart className='w-5 h-5 text-green-200'/>
                         {notification && (
-                            <span className='absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[8px] transition-all duration-700 ease-in rounded-full flex items-center justify-center'>
+                            <span className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] transition-all duration-700 ease-in rounded-full flex items-center justify-center'>
                             {notification > 99 ? (
                                 <div className='flex gap-0.5 items-center justify-center'>
                                     <div className='bg-white rounded-full w-px h-px'/>
@@ -45,13 +84,30 @@ const Navbar = () => {
                             ) : `${notification}` }
                             </span>
                         )}
-                    </div>
-                </div>
-                <div className='relative rounded-full p-1 backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
+                </button>
+                <button onClick={()=>(setIsMenuOpen(!isMenuOpen))} className='flex items-center justify-center relative rounded-full p-1 backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
                     <Menu className='w-5 h-5 text-green-200'/>
-                </div>
+                </button>
 
             </div>
+        </div>
+
+        {/* mobile menu */}
+        <div className={`transform ${isMenuOpen ? 'translate-y-0': '-translate-y-120'} transition-all duration-700 ease-out`}>
+        {isMenuOpen && (
+            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-4 py-3 bg-linear-to-b bg-green-700 backdrop-blur-sm border-t border-white/20'>
+                {categories.map((category, index)=>(
+                    <div key={index} onClick={()=>(handleCategory(category.value))}
+                    className={`flex items-center space-x-3 p-3 rounded-xl justify-center transition-all duration-300 
+                        ${ selectedCat === category.value
+                            ? 'bg-white/30 text-white'
+                            : 'bg-blue-500/50 text-white/90 hover:bg-white/20 border-b w-full text-start cursor-pointer'}`}>
+                            {category.value}
+                            {category.value.length > 25 && '...'}
+                    </div>
+                ))}
+            </div>
+        )}
         </div>
     </nav>
 )

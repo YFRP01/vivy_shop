@@ -7,11 +7,20 @@ const router = Router();
 router.put('/:id', async (req,res)=>{
     try {
         const { id } = req.params;
+        const {liked} = req.body
+
+        if(liked === null || liked === undefined){
+            res.send(400).json({error: "Provide liked status"})
+        }
+
         const update = await pool.query(`
             UPDATE items 
-            SET liked = NOT liked, liked_at = NOW()
-            WHERE item_id=main;
-        `, [id]);
+            SET liked = NOT $1, liked_at = NOW()
+            WHERE item_id=$2 RETURNING item_id, name, liked
+        `, [liked, id]);
+        if(update.length === 0){
+            res.status(404).json("The elemnt doesn't exist")
+        }
         res.status(200).json(update.rows[0]);
         console.log("Updated");
         
