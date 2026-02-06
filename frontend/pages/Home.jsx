@@ -12,8 +12,11 @@ const Home = () => {
     const [searchParams] = useSearchParams()
     const main = searchParams.get('main') || 'main';
     const category = searchParams.get('category') || 'all';
+    const amountDisplayedQty = 10;
+    const startIndex = 0;
+    const [endIndexValue, setEndIndexValue] = useState(amountDisplayedQty)
     
-
+    
     const getItems = async () => {
         try {
             const res = await axios.get(`${API_URL}/items/?main=${main}&category=${category}`)
@@ -23,18 +26,25 @@ const Home = () => {
         }
     };
 
-        const getAllCategories = async ()=>{
-            try {
-                const res = await axios.get(`${API_URL}/categories`);
-                setCategories(res.data)
-            } catch (error) {
-                console.log(error.message)
-            }
+    const getAllCategories = async ()=>{
+        try {
+            const res = await axios.get(`${API_URL}/categories`);
+            setCategories(res.data)
+        } catch (error) {
+            console.log(error.message)
         }
+    }
+
+    const handleDisplay = ()=>{
+        if(endIndexValue+1 < items.length){
+        setEndIndexValue(endIndexValue+amountDisplayedQty)
+        }
+        else return
+    }
 
     useEffect(()=>{
         getItems();
-        getAllCategories();
+        getAllCategories()
     }, [main, category])
 
   return (
@@ -50,11 +60,17 @@ const Home = () => {
             </div>
         </div>
         <div className='w-full px-2 md:px-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-center gap-2'>
-        {items.map((item)=>(
+        {items.slice(startIndex, endIndexValue).map((item)=>(
             <div key={item.item_id} className=''>
                 <ItemCards item={item}/>
             </div>
         ))}
+        </div>
+        <div className={` cursor-pointer flex items-center justify-center w-full text-gray-700 `}>
+            <div className='bg-white rounded text-sm p-1 border border-gray-700'>
+                <p onClick={()=>(handleDisplay())} className={`${endIndexValue < items.length? 'block':'hidden'}`}>See more ...</p>
+                <p onClick={()=>(setEndIndexValue(amountDisplayedQty))} className={`${endIndexValue >= items.length ? 'block':'hidden'}`}>See less</p>
+            </div>
         </div>
     </div>
   )
@@ -63,48 +79,3 @@ const Home = () => {
     
 
 export default Home;
-
-
-
-
-// import React, { useState, useEffect } from 'react'
-// import axios from 'axios'
-// import ItemCards from '../components/ItemCards'
-// import { API_URL } from '../api.js'
-// import { useSearchParams } from 'react-router-dom'
-
-// const Home = () => {
-//   const [items, setItems] = useState([])
-//   const [searchParams] = useSearchParams()
-
-//   const main = searchParams.get('main') || 'main'
-//   const category = searchParams.get('category') || 'all'
-
-//   const getItems = async () => {
-//     try {
-//       const res = await axios.get(`${API_URL}/items/?main=${main}&category=${category}`)
-//       setItems(res.data)
-//     } catch (error) {
-//       console.log(error.message)
-//     }
-//   }
-
-//   useEffect(() => {
-//     getItems()
-//   }, [main, category])
-
-//   return (
-//     <div className="pt-24 flex space-y-5">
-//       <div className="w-full px-4 md:px-10 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-//         {items.map((item) => (
-//           <div key={item.item_id}>
-//             <ItemCards item={item} />
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default Home
-
