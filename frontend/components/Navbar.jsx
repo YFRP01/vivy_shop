@@ -12,23 +12,31 @@ const Navbar = () => {
     const [notification, setNotification] = useState(2);
     const [inputValue, setInputValue] = useState('')
     const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const [selectedCat, setSelectedCat] = useState('')
     const [categories, setCategories] = useState([])
     const [searchParams, setsearchParams] = useSearchParams()
     const [placeholderValue, setPlaceholder] = useState('Search for an item ...')
     const navigate = useNavigate()
 
-    const main = searchParams.get('main') || main;
+    const main = searchParams.get('main') || 'main';
     const category = searchParams.get('category') || 'all';
+
+    const [selectedCat, setSelectedCat] = useState(category)
+    
     const handleCategory = (category)=>{
         setSelectedCat(category)
         setPlaceholder(`Category : ${category}`)
         setsearchParams({main, category:category})
+        console.log(`Main: ${main}    Category: ${category}`);
+        
     }
     
     const handleSearch = ()=>{
 
     }
+
+        useEffect(()=>(
+            setsearchParams()
+        ),[main, category])
 
     const getAllCategories = async ()=>{
         try {
@@ -45,7 +53,7 @@ const Navbar = () => {
 
     
   return (
-    <nav className='fixed z-50 w-full top-0 left-0 right-0 transition-all duration-700 ease-in-out '>
+    <nav className='fixed z-50 w-full top-0 left-0 right-0 transition-all duration-700 ease-in-out'>
         {/* Top nav */}
         <div className='sticky w-full flex items-center z-1 justify-between p-2 px-5 bg-[#066e3b]'>
             <div onClick={()=>(navigate(`/?main=${main}&category=${category}`))} className='flex items-center cursor-pointer gap-2.5 text-white font-bold text-2xl'>
