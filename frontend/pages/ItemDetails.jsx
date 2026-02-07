@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { API_URL } from '../api'
 import { useEffect } from 'react'
-import { Heart, JapaneseYen, Minus, MoveLeft, MoveRight, Plus } from 'lucide-react'
+import { Circle, Heart, JapaneseYen, Minus, MoveLeft, MoveRight, Plus } from 'lucide-react'
 import PopUp from '../components/PopUp'
 
 const ItemDetails = () => {
@@ -84,8 +84,12 @@ const ItemDetails = () => {
                 <div className='bg-black/70 text-white p-1'><MoveLeft className='w-5 h-full'/></div>
                 <div className='bg-black/70 text-white p-1'><MoveRight className='w-5 h-full'/></div>
             </div>
-            <div>
-
+            <div className='w-full bg-blue-500 absolute bottom-2 flex items-center justify-center gap-2'>
+                {thumbnails.map((i)=>(
+                    <div key={i.image_id}>
+                        <Circle className={`w-2 h-2`}/>
+                    </div>
+                ))}
             </div>
         </div>
         <div className='flex flex-col justify-center relative w-full p-2 pr-20 bg-green-200'>

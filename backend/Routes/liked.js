@@ -3,6 +3,34 @@ import pool from "../db.js";
 
 const router = Router();
 
+router.get("/", async(req, res)=>{
+    try {
+        const getAll = await pool.query(
+            `SELECT 
+		i.item_id,
+		i.name,
+		i.liked,
+		(SELECT
+        json_build_object(
+		'qty',inf.qty,
+		'cost',inf.cost,
+		'details',inf.details) FROM infos inf LIMIT 1)
+		 AS info,
+		(SELECT json_build_object(
+		 'qty', o.order_qty,
+		 'info_id', o.info_id
+		 ) 
+		 FROM orders o WHERE o.item_id=i.item_id LIMIT 1) AS order
+        FROM items i
+        WHERE i.liked=true
+        ORDER BY i.created_At ASC
+	`
+        )
+        res.status(200).json(getAll.rows)
+    } catch (error) {
+        res.status(500).json(`Unable to fetch the liked items: ${error.message}`)
+    }
+})
 //update liked
 router.put('/:id', async (req,res)=>{
     try {

@@ -79,7 +79,7 @@ const Navbar = () => {
                 )}
             </div>
             <div className='bg-green-100/20 flex gap-2 items-center p-2 rounded-xl'>
-                <button onClick={()=>(navigate('/liked'))} className='p-1 relative rounded-full flex items-center justify-center backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
+                <button onClick={()=>(navigate('/favourites'))} className='p-1 relative rounded-full flex items-center justify-center backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
                         <Heart className='w-5 h-5 text-green-200'/>
                         {notification && (
                             <span className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] transition-all duration-700 ease-in rounded-full flex items-center justify-center'>

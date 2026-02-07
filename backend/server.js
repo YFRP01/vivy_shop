@@ -4,6 +4,7 @@ import itemRoutes from "./routes/items.js"
 import likedRoutes from "./Routes/liked.js"
 import ordersRoutes from "./Routes/orders.js"
 import categoriesRoutes from "./Routes/categories.js"
+import infoRoutes from "./routes/info.js"
 
 // import categoriesRoutes from "./Routes/categories.js"
 
@@ -25,6 +26,7 @@ app.use("/api/items", itemRoutes)
 app.use("/api/liked", likedRoutes)
 app.use("/api/orders", ordersRoutes)
 app.use("/api/categories", categoriesRoutes)
+app.use("/api/infos", infoRoutes)
 
 
 app.listen(PORT, ()=>{

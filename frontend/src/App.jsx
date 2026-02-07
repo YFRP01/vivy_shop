@@ -5,6 +5,8 @@ import Home from "../pages/Home"
 import MainLayout from "../components/MainLayout"
 import Navbar from "../components/Navbar"
 import ItemDetails from "../pages/ItemDetails"
+import Ordered from "../pages/Ordered"
+import Favourites from "../pages/Favourites"
 
 const App = () => {
 
@@ -16,6 +18,8 @@ const App = () => {
             <Route index element={<Home />}/>
             <Route path='/item/:id' element={<ItemDetails />}/>
           </Route>
+          <Route path="/favourites" element={<Favourites />}/>
+          <Route path="/ordered" element={<Ordered />}/>
         </Routes>
       </div>
   )
