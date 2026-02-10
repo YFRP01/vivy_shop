@@ -58,7 +58,6 @@ router.get("/", async (req, res) => {
 
 
 router.get('/:id', async (req, res) => {
-
   try {
     const { id } = req.params;
 
@@ -147,6 +146,19 @@ router.put('/:id', async (req, res)=>{
     }
 })  
     
+router.post("/", async (req, res)=>{
+  const {item_id, info_id, order_qty} = req.body
+  try { 
+    const process = await pool.query(`
+      INSERT INTO orders (item_id, info_id, order_qty) 
+      VALUES($1, $2, $3) RETURNING *
+    `, [])
+  res.status(200).json(process.rows[0])
+  } catch (error) {
+    res.status(500).json(`Unable to create the order: ${error.message}`)
+  }
+})
+
 //edit thumbnail
 router.put('/thumbnail/:id',async (req,res)=>{
     const {id} = req.params;
@@ -160,32 +172,6 @@ router.put('/thumbnail/:id',async (req,res)=>{
         res.send(500).json(`Unable to edit thumbnail:` + error.message)
     }
 })
-
-//edit order
-router.put('/order/:id', async (req, res) => {
-    const { id } = req.params;
-    const { info_id, order_qty } = req.body;
-
-    try {
-      
-        const result = await pool.query(`
-            UPDATE orders 
-            SET order_qty = COALESCE(main, order_qty),
-            info_id= COALESCE(category, info_id)
-            created_at = NOW()
-            WHERE order_id = $3
-            RETURNING *;`,
-             [order_qty, info_id, id]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Order not found' });
-        }
-        
-        res.json(result.rows[0]);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to update order' });
-    }
-});
 
 //remove order
 router.delete('/order/:id', async (req,res)=>{

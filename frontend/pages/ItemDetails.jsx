@@ -34,6 +34,25 @@ const ItemDetails = () => {
             console.log(`Error message: ${error.message}`)
         }
     }
+
+    const updateFunc = async () =>{
+        try {
+            const process = await axios.put(`${API_URL}/orders/${order_id}`,{
+                info_id: info_id,
+                order_qty: order_qty
+            })
+        } catch (error) {
+            console.log(`Unable to edit the order: ${error.message}`);
+        }
+    }
+
+    const postFunc = () =>{
+        try {
+            
+        } catch (error) {
+            console.log(`Unable to place the order: ${error.message}`);
+        }
+    }
     let [orderedQty, setorderedQty] = useState(0);
     const totalCost = orderedQty*selectedInfo.cost;
     const compute = (operation)=>{
@@ -77,7 +96,7 @@ const ItemDetails = () => {
         <div className='relative w-full'>
             <PopUp message={popUpMessage} isPop={isPop}/>
         </div>
-        <div className='w-full bg-white flex items-center relative'>
+        <div className='w-full bg-white  flex items-center relative'>
             {thumbnails.slice(0,1).map((i)=>(
                 <div key={i.image_id} className='w-full h-50 bg-red-500 flex items-center justify-center relative'>
                     <img src={i.image} alt={i.name} className='object cover w-full h-full flex text-gray-700 justify-center items-center'/>
