@@ -9,14 +9,12 @@ const router = Router();
 -----------------------------*/
 
 router.get("/", async (req, res) => {
-  const { main, category } = req.query;
-
+  const { category } = req.query;
   try {
     let query = '';
     const params = [];
     
     // Main view queries
-    if (main === 'main') {
       query = `
         SELECT 
           i.item_id, 
@@ -34,100 +32,17 @@ router.get("/", async (req, res) => {
           ) FROM infos inf 
           WHERE inf.item_id = i.item_id 
           LIMIT 1) AS info
-        FROM items i
-        WHERE 1=1`;
-      
-      if (category !== 'all') {
-        query += ` AND i.category ILIKE $1`;
-        params.push(`%${category}%`);
-      }
-      
-      query += ` ORDER BY i.item_id`;
-    }
-    
-    // Liked items view
-    else if (main === 'liked') {
-      query = `
-        SELECT 
-          i.item_id, 
-          i.name, 
-          i.category, 
-          i.liked,
-          i.created_at::date AS date, 
-          i.created_at::time AS time,
-          (SELECT json_build_object(
-            'info_id', inf.info_id,
-            'qty', inf.qty,
-            'cost', inf.cost,
-            'details', inf.details
-          ) FROM infos inf 
-          WHERE inf.item_id = i.item_id 
-          LIMIT 1) AS info,
-          json_build_object(
-            'date', o.created_at::date,
-            'time', o.created_at::time
-          ) AS order_info
         FROM items i 
-        LEFT JOIN orders o ON o.item_id = i.item_id
-        WHERE i.liked = true`;
+        WHERE 1=1
+        `;
       
       if (category !== 'all') {
-        query += ` AND i.category ILIKE $1`;
+        query += `AND i.category ILIKE $1`;
         params.push(`%${category}%`);
       }
       
-      query += ` ORDER BY i.created_at ASC`;
-    }
-    
-    // Ordered items view
-    else if (main === 'ordered') {
-      query = `
-        SELECT 
-          i.item_id, 
-          i.name, 
-          i.category, 
-          i.liked,
-          i.created_at::date AS date, 
-          i.created_at::time AS time,
-          (SELECT json_build_object(
-            'cost', inf.cost,
-            'details', inf.details
-          ) FROM infos inf 
-          WHERE inf.info_id = o.info_id) AS info,
-          json_build_object(
-            'order_id', o.order_id,
-            'order_qty', o.order_qty,
-            'date', o.created_at::date,
-            'time', o.created_at::time
-          ) AS order_info
-        FROM items i 
-        LEFT JOIN orders o ON o.item_id = i.item_id
-        WHERE o.order_id IS NOT NULL`;
-      
-      if (category !== 'all') {
-        query += ` AND i.category ILIKE $1`;
-        params.push(`%${category}%`);
-      }
-      
-      query += ` ORDER BY o.created_at ASC`;
-    }
-    
-    // Default query if no main specified
-    else {
-      query = `
-        SELECT 
-          i.item_id, 
-          i.name, 
-          i.category, 
-          i.liked,
-          (SELECT th.image FROM thumbnails th 
-            WHERE th.item_id = i.item_id 
-            LIMIT 1) AS thumbnail
-        FROM items i
-        ORDER BY i.item_id
-        LIMIT 50`;
-    }
-
+      query += ` ORDER BY i.item_id `;
+     
     const result = await pool.query(query, params);
 
     if (result.rows.length === 0) {
@@ -154,7 +69,6 @@ router.get('/:id', async (req, res) => {
         i.category,
         i.liked,
         i.created_at,
-
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
@@ -164,7 +78,17 @@ router.get('/:id', async (req, res) => {
           ) FILTER (WHERE th.image_id IS NOT NULL),
           '[]'
         ) AS thumbnails,
-
+		CASE WHEN o.order_id IS NULL THEN 
+		(SELECT json_build_object(
+			'order_status', false
+		))
+		ELSE 
+		(SELECT json_build_object(
+			'order_status', true,
+			'order_qty', o.order_qty,
+			'info_id', o.info_id
+		))
+		END AS order,
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
@@ -179,8 +103,9 @@ router.get('/:id', async (req, res) => {
       FROM items i
       LEFT JOIN thumbnails th ON th.item_id = i.item_id
       LEFT JOIN infos inf ON inf.item_id = i.item_id
+	  LEFT JOIN orders o ON o.item_id=i.item_id
       WHERE i.item_id = $1
-      GROUP BY i.item_id;`;
+      GROUP BY i.item_id, o.order_id;`;
 
     const result = await pool.query(query, [id]);
 
@@ -268,7 +193,7 @@ router.delete('/order/:id', async (req,res)=>{
         const { id } = req.params;
         const update = await pool.query(`
             DELETE FROM orders
-            WHERE item_id=main;
+            WHERE item_id=$1;
         `, [id]);
         res.status(200).json(update.rows);
         console.log("Updated");

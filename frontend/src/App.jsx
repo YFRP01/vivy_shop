@@ -11,15 +11,15 @@ import Favourites from "../pages/Favourites"
 const App = () => {
 
   return (
-      <div className="min-h-screen bg-slate-500">
+      <div className="min-h-screen bg-slate-50">
         {/* <Navbar /> */}
         <Routes>
           <Route path='/' element={<MainLayout />}>
             <Route index element={<Home />}/>
             <Route path='/item/:id' element={<ItemDetails />}/>
+            <Route path="/favourites" element={<Favourites />}/>
+            <Route path="/ordered" element={<Ordered />}/>          
           </Route>
-          <Route path="/favourites" element={<Favourites />}/>
-          <Route path="/ordered" element={<Ordered />}/>
         </Routes>
       </div>
   )

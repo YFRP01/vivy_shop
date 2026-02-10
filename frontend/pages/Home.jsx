@@ -10,16 +10,16 @@ const Home = () => {
     const [categories, setCategories] = useState([])
     const [items, setItems] = useState([]);
     const [searchParams] = useSearchParams()
-    const main = searchParams.get('main') || 'main';
     const category = searchParams.get('category') || 'all';
     const amountDisplayedQty = 10;
     const startIndex = 0;
     const [endIndexValue, setEndIndexValue] = useState(amountDisplayedQty)
     
+   
     
     const getItems = async () => {
         try {
-            const res = await axios.get(`${API_URL}/items/?main=${main}&category=${category}`)
+            const res = await axios.get(`${API_URL}/items/?category=${category}`)
             setItems(res.data)
         } catch (error) {
             console.log(error.message)
@@ -41,11 +41,15 @@ const Home = () => {
         }
         else return
     }
+    
+    console.log(`params: ${searchParams}, category: ${category}`);
+    
+    
 
     useEffect(()=>{
         getItems();
         getAllCategories()
-    }, [main, category])
+    }, [category])
 
   return (
     <div className='flex flex-col gap-5 p-1'>
@@ -66,7 +70,7 @@ const Home = () => {
             </div>
         ))}
         </div>
-        <div className={` cursor-pointer flex items-center justify-center w-full text-gray-700 `}>
+        <div className={`${items.length > amountDisplayedQty ? 'block':'hidden'} cursor-pointer flex items-center justify-center w-full text-gray-700 `}>
             <div className='bg-white rounded text-sm p-1 border border-gray-700'>
                 <p onClick={()=>(handleDisplay())} className={`${endIndexValue < items.length? 'block':'hidden'}`}>See more ...</p>
                 <p onClick={()=>(setEndIndexValue(amountDisplayedQty))} className={`${endIndexValue >= items.length ? 'block':'hidden'}`}>See less</p>

@@ -4,28 +4,45 @@ import pool from "../db.js";
 const router = Router();
 
 router.get("/", async(req, res)=>{
+    const {category}= req.query
+    const params = []
     try {
-        const getAll = await pool.query(
-            `SELECT 
-		i.item_id,
-		i.name,
-		i.liked,
-		(SELECT
-        json_build_object(
-		'qty',inf.qty,
-		'cost',inf.cost,
-		'details',inf.details) FROM infos inf LIMIT 1)
-		 AS info,
-		(SELECT json_build_object(
-		 'qty', o.order_qty,
-		 'info_id', o.info_id
-		 ) 
-		 FROM orders o WHERE o.item_id=i.item_id LIMIT 1) AS order
-        FROM items i
+        let query=`SELECT 
+		(SELECT 
+			json_build_object(
+			'item_id', i.item_id,
+			'name', i.name,
+			'liked', i.liked,
+            'category', i.category
+			)) AS item,
+		CASE WHEN o.order_id IS NULL THEN false ELSE true END AS order_status,
+		CASE WHEN o.order_id IS NULL THEN 
+		(SELECT 
+			json_build_object(
+				'qty',inf1.qty, 
+				'cost', inf1.cost,
+				'details', inf1.details
+				) FROM infos inf1 LIMIT 1)
+		ELSE
+		(SELECT 
+				json_build_object(
+					'qty', o.order_qty, 
+					'cost', inf2.cost, 
+					'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id)
+		END AS info		
+        FROM items i 
+		LEFT JOIN orders o ON o.item_id=i.item_id
         WHERE i.liked=true
-        ORDER BY i.created_At ASC
+        
 	`
-        )
+    if(category !== 'all'){
+        query+=` AND i.category ILIKE $1`
+        params.push(`%${category}%`)
+    }
+
+    query+=` ORDER BY i.liked_at DESC`
+
+        const getAll = await pool.query(query, params)
         res.status(200).json(getAll.rows)
     } catch (error) {
         res.status(500).json(`Unable to fetch the liked items: ${error.message}`)

@@ -13,22 +13,28 @@ const ItemDetails = () => {
     const [thumbnails, setThumbnails] = useState([])
     const [editLike,setEditLike] = useState()
     const [infos, setInfos] = useState([])
+    const [order, setOrder] = useState([])
     const [selectedInfo, setSelectedInfo] = useState([])
     const [isPop, setIspop] = useState(false)
 
+    console.log('hello: ' +selectedInfo.info_id)
+    
     const getDetails = async()=>{
         try {
             const res = await axios(`${API_URL}/items/${id}`)
-            setItem(res.data)
-            setThumbnails(res.data.thumbnails)
-            setEditLike(res.data.liked)
-            setInfos(res.data.infos)
-            setSelectedInfo(res.data.infos[0])
+            const hold = res.data
+            setItem(hold)
+            setThumbnails(hold.thumbnails)
+            setEditLike(hold.liked)
+            setInfos(hold.infos)
+            setOrder(hold.order)
+            setorderedQty(hold.order.order_qty)
+            setSelectedInfo(hold.order.order_status? hold.infos.find((i)=>(i.info_id === hold.order.info_id)): hold.infos[0])
         } catch (error) {
             console.log(`Error message: ${error.message}`)
         }
     }
-    let [orderedQty, setorderedQty] = useState(1);
+    let [orderedQty, setorderedQty] = useState(0);
     const totalCost = orderedQty*selectedInfo.cost;
     const compute = (operation)=>{
         
@@ -44,14 +50,11 @@ const ItemDetails = () => {
     }
     const popUpMessage = `The value of the ordered quantity can't be less than 1, it has been reinitialised to 1`
     
-    if(orderedQty < 1){
+    if(orderedQty < 0){
         setIspop(true)
         setorderedQty(1); 
     }
-    
-
-    console.log(isPop);
-    
+        
     const likeFunc = async()=>{
         try {
             const res = await axios.put(`${API_URL}/liked/${id}`,{
@@ -117,7 +120,7 @@ const ItemDetails = () => {
             </div>
             <div className='flex flex-wrap gap-2 p-1 px-2'>
                 {infos.map((i)=>(
-                    <p key={i.info_id} onClick={()=>(setSelectedInfo(i),isPop && setIspop(false))} className={`w-full border cursor-pointer ${i.info_id === selectedInfo.info_id ? 'border-2 border-green-500':'border-gray-500'} text-[12px] rounded-2xl space-x-1 bg-red-100 p-2`}>
+                    <p key={i.info_id} onClick={()=>(setSelectedInfo(i),isPop && setIspop(false))} className={`w-full border cursor-pointer ${i.info_id === selectedInfo.info_id  ? 'border-2 border-green-500':'border-gray-500'} text-[12px] rounded-2xl space-x-1 bg-red-100 p-2`}>
                         <span className='font-medium '>{i.qty}</span> 
                         <span className=''>{i.details} a</span> 
                         <span className='font-medium '>{i.cost}</span>

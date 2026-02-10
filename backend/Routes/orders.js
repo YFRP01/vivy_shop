@@ -3,6 +3,34 @@ import pool from "../db.js";
 
 const router = Router();
 
+router.get("/", async (req, res)=>{
+    const {item_id} = req.body
+    try {
+        const result = await pool.query(``)
+        res.status(200).json(result.rows)
+    } catch (error) {
+        res.status(500).json("Unable to get orders")
+        console.log(("Unable to get orders"));
+        
+    }
+})
+
+router.get("/:id", async (req, res)=>{
+    const {id} = req.params
+    try {
+        const result = await pool.query(``,[id])
+        if (result.rows.length === 0) {
+            res.status(404).json(`The order doesn't exist}`)
+            console.log("The order doesn't exist");
+        } else res.status(200).json(result.rows)
+    } catch (error) {
+        res.status(500).json("Unable to get the order")
+        console.log(("Unable to get the order"));
+        
+    }
+})
+
+
 router.post("/", async (req, res)=>{
     const {item_id, info_id, order_qty} = req.body;
     
