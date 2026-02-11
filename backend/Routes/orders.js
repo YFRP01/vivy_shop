@@ -18,7 +18,8 @@ router.get("/", async (req, res)=>{
 router.get("/:id", async (req, res)=>{
     const {id} = req.params
     try {
-        const result = await pool.query(``,[id])
+        const result = await pool.query(`
+            SELECT * FROM orders WHERE order_id = $1`,[id])
         if (result.rows.length === 0) {
             res.status(404).json(`The order doesn't exist}`)
             console.log("The order doesn't exist");
@@ -36,7 +37,7 @@ router.post("/", async (req, res)=>{
     try {
         const create = await pool.query(`
             INSERT INTO orders (item_id, info_id, order_qty)
-            VALUES ($1, $2, $3) RETURNING *`,[item_id, info_id, order_qty])
+            VALUES ($1, $2, $3) RETURNING item_id, info_id, order_qty`,[item_id, info_id, order_qty])
         res.status(200).json(create.rows[0])
     } catch (error) {
         res.status(500).json(`Unable to create order: ${error.message}`)
@@ -51,7 +52,7 @@ router.put("/:id", async (req, res)=>{
             UPDATE orders 
             SET info_id=COALESCE($1, info_id),
             order_qty=COALESCE($2, order_qty)
-            where order_id=$3 RETURNING *`,[info_id, order_qty, id ]
+            where order_id=$3 RETURNING info_id, order_qty `,[info_id, order_qty, id ]
         )
         if(edit.length === 0 ){
             return res.status(404).json(`The element doesn't exists`)
@@ -67,12 +68,16 @@ router.put("/:id", async (req, res)=>{
 router.delete("/:order_id", async (req,res)=>{
     const {order_id}= req.params
     try {
+        const checkExistance = await pool.query(`
+            SELECT order_id FROM orders WHERE order_id=$1`,[order_id])
         const deleteQuery = await pool.query(`
         DELETE FROM orders WHERE order_id=$1;`,[order_id])
     
-    if(deleteQuery.lenth === 0){
+    if(checkExistance.lenth === 0){
         res.status(404).json(`The order doesn't exist`)
-    }
+        console.log(`The order doesn't exist`);
+        
+    } else
     res.status(200).json(deleteQuery.rows[0]
     )
     } catch (error) {

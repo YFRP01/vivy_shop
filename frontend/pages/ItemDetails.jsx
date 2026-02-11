@@ -11,24 +11,29 @@ const ItemDetails = () => {
 
     const [item, setItem] = useState([])
     const [thumbnails, setThumbnails] = useState([])
-    const [editLike,setEditLike] = useState()
+    const [editLike,setEditLike] = useState(false)
     const [infos, setInfos] = useState([])
-    const [order, setOrder] = useState([])
-    const [selectedInfo, setSelectedInfo] = useState([])
+    const [order, setOrder] = useState(null)
+    const [selectedInfo, setSelectedInfo] = useState(null)
     const [isPop, setIspop] = useState(false)
+    const [displayIndex, setDisplayIndex] = useState(0)
+    const [orderedQty, setOrderedQty] = useState(1)
+
+    const totalCost =selectedInfo? orderedQty*selectedInfo.cost : 0;
+
 
    
     const getDetails = async()=>{
         try {
-            const res = await axios(`${API_URL}/items/${id}`)
+            const res = await axios.get(`${API_URL}/items/${id}`)
             const hold = res.data
             setItem(hold.item)
             setThumbnails(hold.thumbnails)
-            setEditLike(hold.liked)
+            setEditLike(hold.item.liked)
             setInfos(hold.infos)
             setOrder(hold.order)
-            setOrderedQty(hold.order.order_qty)
-            setSelectedInfo(hold.order.order_status? hold.infos.find((i)=>(i.info_id === hold.order.info_id)): hold.infos[0])
+            setOrderedQty(hold.order?.order_qty || 1)
+            setSelectedInfo(hold.order.order_status? hold.infos.find((i)=>(i.info_id === hold.order.info_id)) : hold.infos[0])
         } catch (error) {
             console.log(`Error message: ${error.message}`)
         }
@@ -59,36 +64,8 @@ const ItemDetails = () => {
             console.log(`Unable to place the order: ${error.message}`);
         }
     }
-    
-    let [orderedQty, setOrderedQty] = useState(1);
-    console.log(`OrderQTy: ${orderedQty}; Cost: ${selectedInfo.cost}`);
-    
-    const totalCost = orderedQty*selectedInfo.cost || 0;
-    const compute = (operation)=>{
-        if(isPop) setIspop(false);
-        if(operation === 'minus'){
-            setOrderedQty(orderedQty-1)
-        }
-        else if(operation === 'add'){
-            setOrderedQty(orderedQty+1)
-        }
-        console.log(orderedQty);
-        
-    }
-    const popUpMessage = `The value of the ordered quantity can't be less than 1, it has been reinitialised to 1`
-    
-    if(orderedQty < 0 || isNaN(orderedQty)){
-        setIspop(true)
-        setOrderedQty(1); 
-    }
 
-     const editCreate = ()=>{
-        console.log(order.order_id)
-        if(order.order_status){ updateFunc() }
-        else postFunc()
-        
-     }   
-    const likeFunc = async()=>{
+        const likeFunc = async()=>{
         try {
             const res = await axios.put(`${API_URL}/liked/${id}`,{
                 liked: editLike
@@ -96,13 +73,60 @@ const ItemDetails = () => {
             setEditLike(res.data.liked)
             if(isPop) setIspop(false) 
         } catch (error) {
-            console.log(error.message);
-            
+            console.log(error.message);            
         }
     }
 
+    const editCreate = async ()=>{
+        console.log(order.order_id)
+        if(order.order_status){ await updateFunc() }
+        else await postFunc()
+
+        await getDetails()
+    }   
+       
+    const compute = (operation)=>{
+        if(isPop) setIspop(false);
+        setOrderedQty((prev)=>{
+            if(operation === 'minus'){
+                return Math.max(1, prev - 1)
+            }
+            else if(operation === 'add'){
+                return prev+1
+            }
+            return prev
+        })
+        
+    }
+
+    const changeThumbnail = (operation)=>{
+        setDisplayIndex((prev)=>{
+            if(operation === 'minus'){
+                return Math.max(0, prev-1)
+            } else if(operation === 'add'){
+                return Math.min(prev+1, thumbnails.length-1)
+            }
+            return prev
+        })        
+    }
+  
+    const popUpMessage = `The value of the ordered quantity can't be less than 1, it has been reinitialised to 1`
+    
+    
+    const handleInput = (e)=>{
+        const value = parseInt(e.target.value, 10)
+        if(isNaN(value) || value < 1){
+            setOrderedQty(0)
+        } else setOrderedQty(value)
+    }
+      
+
     useEffect(()=>{
         getDetails();
+        if(orderedQty < 0 || isNaN(orderedQty) || !orderedQty){
+            setIspop(true)
+            setOrderedQty(1); 
+        }
     }, [id])
     
   return (
@@ -110,20 +134,22 @@ const ItemDetails = () => {
         <div className='relative w-full'>
             <PopUp message={popUpMessage} isPop={isPop}/>
         </div>
-        <div className='w-full bg-white  flex items-center relative'>
-            {thumbnails.slice(0,1).map((i)=>(
-                <div key={i.image_id} className='w-full h-50 bg-red-500 flex items-center justify-center relative'>
-                    <img src={i.image} alt={i.name} className='object cover w-full h-full flex text-gray-700 justify-center items-center'/>
-                </div>
-            ))}
-            <div className='w-full flex justify-between px-2 h-8 absolute left-0 right-0'>
-                <div className='bg-black/70 text-white p-1'><MoveLeft className='w-5 h-full'/></div>
-                <div className='bg-black/70 text-white p-1'><MoveRight className='w-5 h-full'/></div>
+
+        {/* thumbnail display */}
+        <div className='w-full bg-white flex items-center relative'>
+            <div className='w-full h-50 bg-gray-400 flex items-center justify-center relative'>
+                <img src={thumbnails.length>0?thumbnails[displayIndex].image:null} alt={`${item.name}`} className='object cover w-full h-full flex text-gray-700 justify-center items-center'/>
             </div>
-            <div className='w-full bg-blue-500 absolute bottom-2 flex items-center justify-center gap-2'>
+            <div className='w-full flex justify-between h-8 absolute left-0 right-0'>
+                <div className='relative flex items-center w-full h-full px-2'>
+                    {displayIndex > 0 && (<div onClick={()=>(changeThumbnail('minus'))} className='absolute left-0 transition-colors duration-500 ease-in-out bg-black/70 text-white p-1'><MoveLeft className='w-5 h-full'/></div>)}
+                    {displayIndex < thumbnails.length-1 && (<div  onClick={()=>(changeThumbnail('add'))} className='absolute  right-0 transition-colors duration-500 ease-in-out bg-black/70 text-white p-1'><MoveRight className='w-5 h-full'/></div>)}
+                </div>
+            </div>
+            <div className='w-full absolute bottom-2 flex items-center justify-center gap-2'>
                 {thumbnails.map((i)=>(
                     <div key={i.image_id}>
-                        <Circle className={`w-2 h-2`}/>
+                        <Circle className={`w-2 h-2 transition-all duration-500 ease-in ${thumbnails.length>0 && i.image_id === thumbnails[displayIndex].image_id && 'fill-green-500 text-green-900'}`}/>
                     </div>
                 ))}
             </div>
@@ -136,29 +162,30 @@ const ItemDetails = () => {
             </button>
         </div>
         <div className='w-full p-1 bg-linear-to-b from-green-100 to-green-50 gap-2 flex flex-col items-center'>
-            <div className='w-full flex justify-between flex-col-reverse gap-2 px-2'>
-                <button className='py-1 px-5 cursor-pointer bg-red-500 text-white flex items-center justify-center rounded-2xl border border-gray-500' onClick={()=>(editCreate())}>
-                    {order.order_status? 'EDIT': 'POST'}
-                </button>
+            <div className='w-full flex justify-between flex-col gap-2 px-2'>
                 <div className='w-full flex justify-end gap-1'>
                     <div className='relative flex items-center justify-center border bg-white border-gray-400 rounded-2xl min-w-25 p-1 text-center '>
-                        <span className='flex px-5'>{totalCost.toString()}</span>
+                        <span className='flex px-5'>{parseFloat(totalCost)}</span>
                         <JapaneseYen className='w-4 h-4  text-gray-600 absolute right-1'/>
                     </div>
                     <div className='flex items-center justify-center rounded-2xl gap-1 w-25 border bg-white border-gray-600 p-1'>
                         <Minus onClick={()=>(compute('minus'))} className='flex-2 w-full h-full bg-gray-400 rounded-l-2xl'/>
                         <input
-                        type='text'
+                        type='number'
+                        min='1'
                         value={orderedQty}
-                        onChange={(e)=>(setOrderedQty(e.target.value))} 
+                        onChange={handleInput} 
                         className='flex-3 bg-gray-400 h-full w-full text-center'/>
                         <Plus onClick={()=>(compute('add'))} className='flex-2 w-full h-full bg-gray-400 rounded-r-2xl'/>
                     </div>
                 </div>
+                <button className='py-1 px-5 cursor-pointer bg-red-500 text-white flex items-center justify-center rounded-2xl border border-gray-500' onClick={()=>(editCreate())}>
+                    {order?.order_status? 'EDIT': 'POST'}
+                </button>
             </div>
             <div className='flex flex-wrap gap-2 p-1 px-2'>
                 {infos.map((i)=>(
-                    <p key={i.info_id} onClick={()=>(setSelectedInfo(i),isPop && setIspop(false))} className={`w-full border cursor-pointer ${i.info_id === selectedInfo.info_id  ? 'border-2 border-green-500':'border-gray-500'} text-[12px] rounded-2xl space-x-1 bg-red-100 p-2`}>
+                    <p key={i.info_id} onClick={()=>(setSelectedInfo(i),isPop && setIspop(false))} className={`w-full border cursor-pointer ${i.info_id === selectedInfo?.info_id  ? 'border-2 border-green-500':'border-gray-500'} text-[12px] rounded-2xl space-x-1 bg-red-100 p-2`}>
                         <span className='font-medium '>{i.qty}</span> 
                         <span className=''>{i.details} a</span> 
                         <span className='font-medium '>{i.cost}</span>

@@ -2,12 +2,10 @@ import axios from 'axios';
 import React, { useState } from 'react'
 import { API_URL } from '../api';
 import { Heart, Verified } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import ViewMore from './ViewMore';
 
 const FavRowDisplay = ({item, info, order_status}) => {
     const [like, setLike] = useState(item.liked)
-    const navigate = useNavigate()
     const [viewDetails, setViewDetails] = useState(false)
 
     const editLike = async ()=>{
@@ -18,7 +16,6 @@ const FavRowDisplay = ({item, info, order_status}) => {
             setLike(result.data.liked)
         } catch (error) {
             console.log(error.message);
-            
         }
     }
     

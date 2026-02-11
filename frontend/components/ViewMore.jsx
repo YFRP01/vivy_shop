@@ -21,7 +21,7 @@ const ViewMore = ({item, info, order_status, editLike, like, isView, setIsView})
   }, [])
 
     return (
-        <div className={`absolute left-0 right-0 top-0 bottom-0 h-screen bg-black/20  w-screen z-11 ${isView ? 'block':'hidden'}`}>
+        <div className={`fixed left-0 right-0 top-0 bottom-0 h-screen bg-black/20  w-screen z-11 ${isView ? 'block':'hidden'}`}>
             <div className='flex flex-col px-10 md:px-25 lg:px-30 items-center justify-center h-full'>
                 <div ref={modalRef} className={`border relative h-80 bg-white border-blue-400 rounded-2xl flex flex-col items-center justify-center`}>
                     <div className='p-2 py-5 w-full h-full flex flex-col items-center justify-start wrap-break-word overflow-y-auto'>
