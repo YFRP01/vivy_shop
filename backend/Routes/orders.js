@@ -30,10 +30,9 @@ router.get("/:id", async (req, res)=>{
     }
 })
 
-
+  
 router.post("/", async (req, res)=>{
     const {item_id, info_id, order_qty} = req.body;
-    
     try {
         const create = await pool.query(`
             INSERT INTO orders (item_id, info_id, order_qty)
@@ -54,7 +53,7 @@ router.put("/:id", async (req, res)=>{
             order_qty=COALESCE($2, order_qty)
             where order_id=$3 RETURNING *`,[info_id, order_qty, id ]
         )
-        if(edit.lenth === 0 ){
+        if(edit.length === 0 ){
             return res.status(404).json(`The element doesn't exists`)
         };
         console.log(`Successfully Updated`);

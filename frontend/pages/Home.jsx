@@ -42,12 +42,8 @@ const Home = () => {
         else return
     }
     
-    console.log(`params: ${searchParams}, category: ${category}`);
-    
-    
-
     useEffect(()=>{
-        getItems();
+        getItems()
         getAllCategories()
     }, [category])
 

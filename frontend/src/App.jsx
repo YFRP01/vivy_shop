@@ -1,9 +1,7 @@
 import React from "react"
-import { BrowserRouter, Route, Routes } from "react-router-dom"
-import Rough from '../pages/Rough'
+import { Route, Routes } from "react-router-dom"
 import Home from "../pages/Home"
 import MainLayout from "../components/MainLayout"
-import Navbar from "../components/Navbar"
 import ItemDetails from "../pages/ItemDetails"
 import Ordered from "../pages/Ordered"
 import Favourites from "../pages/Favourites"

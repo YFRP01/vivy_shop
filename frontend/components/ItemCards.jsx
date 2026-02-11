@@ -32,7 +32,7 @@ const ItemCards = ({item}) => {
             setEditLike(res.data.liked)
             console.log(`Like status: ${res.data}`)
         } catch (error) {
-            console.log(`Unable to Like/Unlike the item: ${error.message}`)
+            console.log(`Unable to like/unlike the item: ${error.message}`)
         }
     }
 

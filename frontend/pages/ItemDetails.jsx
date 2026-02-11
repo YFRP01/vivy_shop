@@ -17,18 +17,17 @@ const ItemDetails = () => {
     const [selectedInfo, setSelectedInfo] = useState([])
     const [isPop, setIspop] = useState(false)
 
-    console.log('hello: ' +selectedInfo.info_id)
-    
+   
     const getDetails = async()=>{
         try {
             const res = await axios(`${API_URL}/items/${id}`)
             const hold = res.data
-            setItem(hold)
+            setItem(hold.item)
             setThumbnails(hold.thumbnails)
             setEditLike(hold.liked)
             setInfos(hold.infos)
             setOrder(hold.order)
-            setorderedQty(hold.order.order_qty)
+            setOrderedQty(hold.order.order_qty)
             setSelectedInfo(hold.order.order_status? hold.infos.find((i)=>(i.info_id === hold.order.info_id)): hold.infos[0])
         } catch (error) {
             console.log(`Error message: ${error.message}`)
@@ -37,43 +36,58 @@ const ItemDetails = () => {
 
     const updateFunc = async () =>{
         try {
-            const process = await axios.put(`${API_URL}/orders/${order_id}`,{
-                info_id: info_id,
-                order_qty: order_qty
+            await axios.put(`${API_URL}/orders/${order.order_id}`,{
+                info_id: selectedInfo.info_id,
+                order_qty: orderedQty
             })
+            console.log(`Order successfully updated`);       
         } catch (error) {
             console.log(`Unable to edit the order: ${error.message}`);
         }
     }
 
-    const postFunc = () =>{
+    const postFunc = async () =>{
         try {
+            await axios.post(`${API_URL}/orders`,{
+                item_id: item.item_id,
+                info_id: selectedInfo.info_id,
+                order_qty: orderedQty
+            })
+            console.log(`Order successfully created`);
             
         } catch (error) {
             console.log(`Unable to place the order: ${error.message}`);
         }
     }
-    let [orderedQty, setorderedQty] = useState(0);
-    const totalCost = orderedQty*selectedInfo.cost;
+    
+    let [orderedQty, setOrderedQty] = useState(1);
+    console.log(`OrderQTy: ${orderedQty}; Cost: ${selectedInfo.cost}`);
+    
+    const totalCost = orderedQty*selectedInfo.cost || 0;
     const compute = (operation)=>{
-        
-        if(isPop) setIspop(false)
+        if(isPop) setIspop(false);
         if(operation === 'minus'){
-            setorderedQty(orderedQty-1)
+            setOrderedQty(orderedQty-1)
         }
         else if(operation === 'add'){
-            setorderedQty(orderedQty+1)
+            setOrderedQty(orderedQty+1)
         }
+        console.log(orderedQty);
         
-                 
     }
     const popUpMessage = `The value of the ordered quantity can't be less than 1, it has been reinitialised to 1`
     
-    if(orderedQty < 0){
+    if(orderedQty < 0 || isNaN(orderedQty)){
         setIspop(true)
-        setorderedQty(1); 
+        setOrderedQty(1); 
     }
+
+     const editCreate = ()=>{
+        console.log(order.order_id)
+        if(order.order_status){ updateFunc() }
+        else postFunc()
         
+     }   
     const likeFunc = async()=>{
         try {
             const res = await axios.put(`${API_URL}/liked/${id}`,{
@@ -122,19 +136,24 @@ const ItemDetails = () => {
             </button>
         </div>
         <div className='w-full p-1 bg-linear-to-b from-green-100 to-green-50 gap-2 flex flex-col items-center'>
-            <div className='w-full flex justify-end gap-1'>
-                <div className='relative flex items-center justify-center border bg-white border-gray-400 rounded-2xl min-w-25 p-1 text-center '>
-                    <span className='flex px-5'>{totalCost.toString()}</span>
-                    <JapaneseYen className='w-4 h-4  text-gray-600 absolute right-1'/>
-                </div>
-                <div className='flex items-center justify-center rounded-2xl gap-1 w-25 border bg-white border-gray-600 p-1'>
-                    <Minus onClick={()=>(compute('minus'))} className='flex-2 w-full h-full bg-gray-400 rounded-l-2xl'/>
-                    <input
-                    type='text'
-                    value={orderedQty}
-                    onChange={(e)=>(setorderedQty(e.target.value))} 
-                    className='flex-3 bg-gray-400 h-full w-full text-center'/>
-                    <Plus onClick={()=>(compute('add'))} className='flex-2 w-full h-full bg-gray-400 rounded-r-2xl'/>
+            <div className='w-full flex justify-between flex-col-reverse gap-2 px-2'>
+                <button className='py-1 px-5 cursor-pointer bg-red-500 text-white flex items-center justify-center rounded-2xl border border-gray-500' onClick={()=>(editCreate())}>
+                    {order.order_status? 'EDIT': 'POST'}
+                </button>
+                <div className='w-full flex justify-end gap-1'>
+                    <div className='relative flex items-center justify-center border bg-white border-gray-400 rounded-2xl min-w-25 p-1 text-center '>
+                        <span className='flex px-5'>{totalCost.toString()}</span>
+                        <JapaneseYen className='w-4 h-4  text-gray-600 absolute right-1'/>
+                    </div>
+                    <div className='flex items-center justify-center rounded-2xl gap-1 w-25 border bg-white border-gray-600 p-1'>
+                        <Minus onClick={()=>(compute('minus'))} className='flex-2 w-full h-full bg-gray-400 rounded-l-2xl'/>
+                        <input
+                        type='text'
+                        value={orderedQty}
+                        onChange={(e)=>(setOrderedQty(e.target.value))} 
+                        className='flex-3 bg-gray-400 h-full w-full text-center'/>
+                        <Plus onClick={()=>(compute('add'))} className='flex-2 w-full h-full bg-gray-400 rounded-r-2xl'/>
+                    </div>
                 </div>
             </div>
             <div className='flex flex-wrap gap-2 p-1 px-2'>
