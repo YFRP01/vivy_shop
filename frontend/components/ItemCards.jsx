@@ -4,12 +4,13 @@ import { Heart, HeartCrack, JapaneseYen, Tag } from 'lucide-react'
 import axios from 'axios'
 import { API_URL } from '../api'
 import { useNavigate } from 'react-router-dom'
+import { useNotifications } from '../components/context/NotificationsContext.jsx'
 
 const ItemCards = ({item}) => {
 
+    const {setLikedCount} = useNotifications()
     const [editLike, setEditLike] = useState(item.liked)
     const navigate = useNavigate()
-
     const getCategoryColor = (category) => {
     const colors = {
       "health": 'from-blue-500 to-blue-600',
@@ -30,11 +31,14 @@ const ItemCards = ({item}) => {
                 liked: editLike
             })
             setEditLike(res.data.liked)
+
+            const globalLikedNotif = await axios.get(`${API_URL}/liked_notifications`)
+            setLikedCount(globalLikedNotif.data[0]?.count || 0)
         } catch (error) {
             console.log(`Unable to like/unlike the item: ${error.message}`)
         }
     }
-
+    
     const formatPrice = (price) => {
     return (price * exchangeRate).toLocaleString('en-US', {
       minimumFractionDigits: 2,

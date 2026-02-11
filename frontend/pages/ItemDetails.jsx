@@ -5,10 +5,12 @@ import { API_URL } from '../api'
 import { useEffect } from 'react'
 import { Circle, Heart, JapaneseYen, Minus, MoveLeft, MoveRight, Plus } from 'lucide-react'
 import PopUp from '../components/PopUp'
+import { useNotifications } from '../components/context/NotificationsContext'
 
 const ItemDetails = () => {
     const {id} = useParams()
 
+    const {setLikedCount} = useNotifications()
     const [item, setItem] = useState([])
     const [thumbnails, setThumbnails] = useState([])
     const [editLike,setEditLike] = useState(false)
@@ -18,11 +20,8 @@ const ItemDetails = () => {
     const [isPop, setIspop] = useState(false)
     const [displayIndex, setDisplayIndex] = useState(0)
     const [orderedQty, setOrderedQty] = useState(1)
-
     const totalCost =selectedInfo? orderedQty*selectedInfo.cost : 0;
 
-
-   
     const getDetails = async()=>{
         try {
             const res = await axios.get(`${API_URL}/items/${id}`)
@@ -71,7 +70,10 @@ const ItemDetails = () => {
                 liked: editLike
             });
             setEditLike(res.data.liked)
-            if(isPop) setIspop(false) 
+            if(isPop) setIspop(false)
+                
+            const globalLikedNotif = await axios.get(`${API_URL}/liked_notifications`)
+            setLikedCount(globalLikedNotif.data[0]?.count || 0)
         } catch (error) {
             console.log(error.message);            
         }

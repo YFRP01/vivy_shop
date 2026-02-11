@@ -3,15 +3,42 @@ import pool from "../db.js";
 
 const router = Router();
 
-router.get("/", async (req, res)=>{
-    const {item_id} = req.body
+
+router.get("/", async(req, res)=>{
+    const {category}= req.query
+    const params = []
     try {
-        const result = await pool.query(``)
-        res.status(200).json(result.rows)
-    } catch (error) {
-        res.status(500).json("Unable to get orders")
-        console.log(("Unable to get orders"));
+        let query=`
+        SELECT 
+		(SELECT 
+			json_build_object(
+			'item_id', i.item_id,
+			'name', i.name,
+			'liked', i.liked,
+            'category', i.category
+			)) AS item,
+		CASE WHEN o.order_id IS NULL THEN false ELSE true END AS order_status,
+		(SELECT 
+            json_build_object(
+                'qty', o.order_qty, 
+                'cost', inf2.cost, 
+                'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id)
+		AS info		
+        FROM items i
+		JOIN orders o ON o.item_id=i.item_id
         
+	`
+    if(category !== 'all'){
+        query+=` WHERE i.category ILIKE $1 `
+        params.push(`%${category}%`)
+    }
+
+    query+=` ORDER BY i.created_at DESC `
+
+        const getAll = await pool.query(query, params)
+        res.status(200).json(getAll.rows)
+    } catch (error) {
+        res.status(500).json(`Unable to fetch the orders: ${error.message}`)
     }
 })
 
@@ -87,4 +114,4 @@ router.delete("/:order_id", async (req,res)=>{
 
 
 
-export default router
+export default router;
