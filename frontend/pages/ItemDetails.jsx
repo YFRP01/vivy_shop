@@ -140,8 +140,8 @@ const ItemDetails = () => {
             <div className='w-full h-50 bg-gray-400 flex items-center justify-center relative'>
                 <img src={thumbnails.length>0?thumbnails[displayIndex].image:null} alt={`${item.name}`} className='object cover w-full h-full flex text-gray-700 justify-center items-center'/>
             </div>
-            <div className='w-full flex justify-between h-8 absolute left-0 right-0'>
-                <div className='relative flex items-center w-full h-full px-2'>
+            <div className='w-full flex justify-between h-8 px-2 absolute left-0 right-0'>
+                <div className='relative flex items-center w-full h-full'>
                     {displayIndex > 0 && (<div onClick={()=>(changeThumbnail('minus'))} className='absolute left-0 transition-colors duration-500 ease-in-out bg-black/70 text-white p-1'><MoveLeft className='w-5 h-full'/></div>)}
                     {displayIndex < thumbnails.length-1 && (<div  onClick={()=>(changeThumbnail('add'))} className='absolute  right-0 transition-colors duration-500 ease-in-out bg-black/70 text-white p-1'><MoveRight className='w-5 h-full'/></div>)}
                 </div>
@@ -154,9 +154,9 @@ const ItemDetails = () => {
                 ))}
             </div>
         </div>
-        <div className='flex flex-col justify-center relative w-full p-2 pr-20 bg-green-200'>
-            <p className='flex break-all'><span>Name:</span><span className='flex-1'> {item.name} item.description</span></p>
-            <p className='flex gap-1 flex-wrap break-all'><span className=''>Description:</span><span className='flex-1'> item.description</span></p>
+        <div className='flex flex-col justify-center relative w-full p-2 pr-20 bg-blue-200'>
+            <p className='flex break-all flex gap-1 flex-wrap break-word'><span>Name:</span><span className='flex-1'> {item.name}</span></p>
+            <p className='flex gap-1 flex-wrap break-word'><span className=''>Category:</span><span className='flex-1'> {item.category}</span></p>            
             <button className='absolute right-2 '>
                     {editLike ?(<Heart onClick={()=>(likeFunc())} className='w-15 h-15 text-red-500 fill-red-500 transition-colors duration-100 ease-in-out'/>):((<Heart onClick={()=>(likeFunc())} className='w-15 h-15 fill-gray-500 text-gray-500 transition-colors duration-100 ease-in-out' />))}
             </button>

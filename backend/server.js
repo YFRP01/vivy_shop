@@ -5,7 +5,7 @@ import likedRoutes from "./Routes/liked.js"
 import ordersRoutes from "./Routes/orders.js"
 import categoriesRoutes from "./Routes/categories.js"
 import infoRoutes from "./routes/info.js"
-
+import likedNotifRoutes from "./routes/liked_notifications.js"
 // import categoriesRoutes from "./Routes/categories.js"
 
 import dotenv from 'dotenv'
@@ -27,6 +27,7 @@ app.use("/api/liked", likedRoutes)
 app.use("/api/orders", ordersRoutes)
 app.use("/api/categories", categoriesRoutes)
 app.use("/api/infos", infoRoutes)
+app.use("/api/liked_notifications", likedNotifRoutes)
 
 
 app.listen(PORT, ()=>{

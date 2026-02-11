@@ -48,6 +48,7 @@ router.get("/", async(req, res)=>{
         res.status(500).json(`Unable to fetch the liked items: ${error.message}`)
     }
 })
+
 //update liked
 router.put('/:id', async (req,res)=>{
     try {
@@ -55,19 +56,23 @@ router.put('/:id', async (req,res)=>{
         const {liked} = req.body
 
         if(liked === null || liked === undefined){
-            res.send(400).json({error: "Provide liked status"})
+            return res.send(400).json({error: "Provide liked status"})
         }
 
+        if(!liked){
+            await pool.query(`INSERT INTO liked_notif (item_id) VALUES($1)`,[id])
+        } else await pool.query(`DELETE FROM liked_notif WHERE item_id=$1`,[id])
         const update = await pool.query(`
             UPDATE items 
             SET liked = NOT $1, liked_at = NOW()
             WHERE item_id=$2 RETURNING item_id, name, liked
         `, [liked, id]);
+
         if(update.length === 0){
             res.status(404).json("The elemnt doesn't exist")
         }
         res.status(200).json(update.rows[0]);
-        console.log("Updated");
+        console.log(`${liked? 'Unliked' : 'Liked'}`);
         
     } catch (error) {
         res.status(500).json({error: 'Failed to like / unlike of item'})

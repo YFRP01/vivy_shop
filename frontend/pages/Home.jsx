@@ -14,9 +14,8 @@ const Home = () => {
     const amountDisplayedQty = 10;
     const startIndex = 0;
     const [endIndexValue, setEndIndexValue] = useState(amountDisplayedQty)
-    
-   
-    
+
+       
     const getItems = async () => {
         try {
             const res = await axios.get(`${API_URL}/items/?category=${category}`)

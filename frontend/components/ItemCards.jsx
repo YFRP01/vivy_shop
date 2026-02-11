@@ -30,7 +30,6 @@ const ItemCards = ({item}) => {
                 liked: editLike
             })
             setEditLike(res.data.liked)
-            console.log(`Like status: ${res.data}`)
         } catch (error) {
             console.log(`Unable to like/unlike the item: ${error.message}`)
         }
@@ -44,19 +43,14 @@ const ItemCards = ({item}) => {
 
     return (
       <div className='flex overflow-hidden cursor-pointer hover:scale-101 w-full flex-col h-75 md:h-83 relative bg-white shadow-md hover:shadow-lg transition shadow-all duration-300 p-1 rounded-xl'>
-        {/* <p className='absolute overflow-hidden bg-orange-100 h-5 leading-5 max-w-30 text-end rounded-l-full text-xs px-2 flex flex-wrap items-center justify-end right-0 top-3 text-orange-500'>
-            {item.category.slice(0,14)}
-            {item.category.length > 17 && '...'}
-        </p> */}
-
         <div className="absolute top-3 right-3 z-1">
         <div className={`flex items-center gap-1 bg-linear-to-r ${getCategoryColor(item.category)} text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-md backdrop-blur-sm`}>
-          <Tag className="w-3 h-3" />
-          <span className="max-w-24 truncate">
+            <Tag className="w-3 h-3" />
+            <span className="max-w-24 truncate">
             {item.category || 'General'}
-          </span>
+            </span>
         </div>
-      </div>
+        </div>
 
         <div className='bg-[#e1e5e9] relative w-full flex-3 flex items-center justify-center text-xs text-black/40 rounded-xl'>
             <img onClick={()=>(navigate(`/item/${item.item_id}`))} src={item.thumbnail} alt={item.name +' image'} className='object-cover w-full flex items-center justify-center h-full transition all duration-200 px-5'/>

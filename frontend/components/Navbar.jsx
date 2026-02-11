@@ -4,23 +4,22 @@ import { useEffect } from 'react';
 import { useState } from 'react'
 import { API_URL } from '../api.js';
 import axios from 'axios';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 
 const Navbar = () => {
 
-    const [notification, setNotification] = useState(2);
+    const [likedNotification, setLikedNotification] = useState(0);
     const [inputValue, setInputValue] = useState('')
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [categories, setCategories] = useState([])
     const [searchParams, setsearchParams] = useSearchParams()
     const [placeholderValue, setPlaceholder] = useState('Search for an item ...')
     const navigate = useNavigate()
-
     const category = searchParams.get('category') || 'all';
-
     const [selectedCat, setSelectedCat] = useState(category)
-    
+    const location = useLocation()
+
     const handleCategory = (category)=>{
         setSelectedCat(category)
         setPlaceholder(`Category : ${category}`)
@@ -32,7 +31,6 @@ const Navbar = () => {
     const handleSearch = (e)=>{
         if(e.key === 'Enter' && inputValue.trim()){
             console.log('Searching for: ', inputValue);
-            
         }
     }
 
@@ -45,11 +43,32 @@ const Navbar = () => {
         }
     }
 
+    const getLikedNotif = async()=>{
+        try {
+            const response = await axios.get(`${API_URL}/liked_notifications`)
+            setLikedNotification(parseInt(response.data[0]?.count || 0))
+        } catch (error) {
+            console.log(`Unable to get new liked notifications: ${error.message}`);         
+        }
+    }
+    
+    const deleteLikedNotif = async()=>{
+        try {
+            await axios.delete(`${API_URL}/liked_notifications`)
+            setLikedNotification(0)
+        } catch (error) {
+            console.log(`Unable to get new liked notifications: ${error.message}`);         
+        }
+    }
+    
     useEffect(()=>{
          if (!searchParams.get('category')) {
             setsearchParams({ category: 'all' })
         }
+        if(isNaN(likedNotification) || likedNotification === undefined || likedNotification === null) {setLikedNotification(likedNotification)}
         getAllCategories()
+        getLikedNotif()
+        if(location.pathname.includes('/favourites')) deleteLikedNotif()
     },[])
 
         
@@ -82,15 +101,15 @@ const Navbar = () => {
             <div className='bg-green-100/20 flex gap-2 items-center p-2 rounded-xl'>
                 <button onClick={()=>(navigate('/favourites'))} className='p-1 relative rounded-full flex items-center justify-center backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
                         <Heart className='w-5 h-5 text-green-200'/>
-                        {notification && (
+                        {likedNotification > 0 && (
                             <span className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] transition-all duration-700 ease-in rounded-full flex items-center justify-center'>
-                            {notification > 99 ? (
+                            {likedNotification > 99 ? (
                                 <div className='flex gap-0.5 items-center justify-center'>
                                     <div className='bg-white rounded-full w-px h-px'/>
                                     <div className='bg-white rounded-full w-px h-px'/>
                                     <div className='bg-white rounded-full w-px h-px'/>
                                 </div>
-                            ) : `${notification}` }
+                            ) : `${likedNotification}` }
                             </span>
                         )}
                 </button>
