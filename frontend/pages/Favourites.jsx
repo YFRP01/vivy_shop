@@ -1,12 +1,12 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { API_URL } from '../api';
-import FavRowDisplay from '../components/FavRowDisplay';
+import FavRowDisplay from '../components/rows/FavRowDisplay';
 import { useSearchParams } from 'react-router-dom';
 
 
 const Favourites = () => {
-
+    
     const [searchParams] = useSearchParams()
     let category = searchParams.get('category') || 'all';
     const [itemArray, setItemArray] = useState([])
@@ -20,11 +20,6 @@ const Favourites = () => {
             console.log(`Unable to get the liked items ${error.message}`);
         }
     }
- 
-    // console.log(`params: ${searchParams.get('category')}, category: ${category} lenght: ${itemArray.length}`);
-
-
-    
     
     useEffect(()=>{
         getLikedItem()

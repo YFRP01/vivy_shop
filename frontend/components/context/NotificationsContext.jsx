@@ -5,9 +5,9 @@ const ContainerContext = createContext();
 export const NotificationProvider = ({children}) => {
     const [likedCount, setLikedCount] = useState(0)
     return (
-        <ContainerContext value={{likedCount, setLikedCount}}>
+        <ContainerContext.Provider value={{likedCount, setLikedCount}}>
             {children}
-        </ContainerContext>
+        </ContainerContext.Provider>
     )
 }
 

@@ -17,7 +17,7 @@ router.get("/", async(req, res)=>{
 			'liked', i.liked,
             'category', i.category
 			)) AS item,
-		CASE WHEN o.order_id IS NULL THEN false ELSE true END AS order_status,
+        o.order_id,
 		(SELECT 
             json_build_object(
                 'qty', o.order_qty, 

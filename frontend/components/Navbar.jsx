@@ -60,6 +60,7 @@ const Navbar = () => {
             console.log(`Unable to get new liked notifications: ${error.message}`);         
         }
     }
+
     
     useEffect(()=>{
          if (!searchParams.get('category')) {
@@ -123,7 +124,7 @@ const Navbar = () => {
                             </span>
                         )}
                 </button>
-                <button onClick={()=>(setIsMenuOpen(!isMenuOpen))} className='flex items-center justify-center relative rounded-full p-1 backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-150 ease-in'>
+                <button onClick={()=>(setIsMenuOpen(!isMenuOpen))} className={`${location.pathname.includes('item')? 'hidden' : 'block'} flex items-center justify-center relative rounded-full p-1 backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-300 ease-in`}>
                     <Menu className='w-5 h-5 text-green-200'/>
                 </button>
 

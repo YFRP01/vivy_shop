@@ -1,8 +1,8 @@
 import axios from 'axios';
 import React, { useState } from 'react'
-import { API_URL } from '../api';
+import { API_URL } from '../../api';
 import { Heart, Verified } from 'lucide-react';
-import ViewMore from './ViewMore';
+import ViewMore from '../ViewMore';
 
 const FavRowDisplay = ({item, info, order_status}) => {
     const [like, setLike] = useState(item.liked)
