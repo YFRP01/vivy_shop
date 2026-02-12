@@ -13,8 +13,8 @@ router.get("/", async(req, res)=>{
 			'item_id', i.item_id,
 			'name', i.name,
 			'liked', i.liked,
-            'category', i.category
-			)) AS item,
+            'category', c1.category_name
+			) FROM categories c1 WHERE c1.category_id = i.category_id ) AS item,
 		CASE WHEN o.order_id IS NULL THEN false ELSE true END AS order_status,
 		CASE WHEN o.order_id IS NULL THEN 
 		(SELECT 
@@ -25,18 +25,21 @@ router.get("/", async(req, res)=>{
 				) FROM infos inf1 LIMIT 1)
 		ELSE
 		(SELECT 
-				json_build_object(
-					'qty', o.order_qty, 
-					'cost', inf2.cost, 
-					'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id)
+			json_build_object(
+				'qty', o.order_qty, 
+				'cost', inf2.cost, 
+				'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id)
 		END AS info		
         FROM items i 
 		LEFT JOIN orders o ON o.item_id=i.item_id
-        WHERE i.liked=true
+        WHERE i.liked=true 
         
 	`
     if(category !== 'all'){
-        query+=` AND i.category ILIKE $1`
+        query+=` AND i.category_id IN (
+			SELECT category_id FROM categories 
+            WHERE category_name ILIKE $1
+		)`
         params.push(`%${category}%`)
     }
 

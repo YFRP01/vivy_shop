@@ -19,7 +19,7 @@ router.get("/", async (req, res) => {
         SELECT 
           i.item_id, 
           i.name, 
-          (SELECT c.category_name FROM categories c WHERE i.category_id = c.category_id) AS category, 
+          (SELECT c1.category_name FROM categories c1 WHERE i.category_id = c1.category_id) AS category, 
           i.liked,
           (SELECT th.image FROM thumbnails th 
             WHERE th.item_id = i.item_id 
@@ -33,11 +33,11 @@ router.get("/", async (req, res) => {
           WHERE inf.item_id = i.item_id 
           LIMIT 1) AS info
         FROM items i 
-        WHERE 1=1
         `;
       
       if (category !== 'all') {
-        query += `AND i.category ILIKE $1`;
+        query += ` WHERE i.category_id IN
+		   (SELECT category_id FROM categories WHERE category_name ILIKE $1) `;
         params.push(`%${category}%`);
       }
       

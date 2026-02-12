@@ -15,8 +15,8 @@ router.get("/", async(req, res)=>{
 			'item_id', i.item_id,
 			'name', i.name,
 			'liked', i.liked,
-            'category', i.category
-			)) AS item,
+            'category', c1.category_name
+			) FROM categories c1 WHERE c1.category_id = i.category_id ) AS item,
         o.order_id,
 		(SELECT 
             json_build_object(
@@ -29,7 +29,10 @@ router.get("/", async(req, res)=>{
         
 	`
     if(category !== 'all'){
-        query+=` WHERE i.category ILIKE $1 `
+        query+=` WHERE i.category_id IN (
+			SELECT category_id FROM categories 
+            WHERE category_name ILIKE $1
+		) `
         params.push(`%${category}%`)
     }
 
