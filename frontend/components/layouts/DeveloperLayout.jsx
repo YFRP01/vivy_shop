@@ -1,11 +1,19 @@
-import React, { useState } from 'react'
+;import React, { useState } from 'react'
 import { Outlet, useNavigate } from "react-router-dom"
+
+
 const DeveloperLayout = () => {
-  
+
+  const [selectedMethod, setSelectedMethod] = useState(0)
   const pages = [
     {"id": 0, "title": "Create" , "nav": '/developer' },
     {"id": 1, "title": "All items" , "nav": '/developer/items' },
     {"id": 2, "title": "Categories" , "nav": '/developer/categories' },
+  ]
+
+  const methods = [
+    {"id": 0, "title":"POST", "nav": "/post" },
+    {"id": 1, "title":"EDIT", "nav": "/edit" }
   ]
 
   const navigate = useNavigate()
@@ -19,7 +27,14 @@ const DeveloperLayout = () => {
               </div>
             ))}  
         </div>    
-        <div className='bg-white'><Outlet /></div>
+        <div className='bg-white flex gap-1'>
+          <div className='w-20 md:w-26 py-4 flex flex-col gap-2 bg-gray-100 border-r-blue-200'>
+            {methods.map((m)=>(
+              <p className={`${selectedMethod === m.id ? 'bg-blue-300 hover:bg-blue-200' : 'text-blue-400 hover:bg-blue-100' } p-2 text-sm`} key={m.id} onClick={()=>(navigate(m.nav))}>{m.title}</p>
+            ))}
+          </div>
+          <Outlet />
+        </div>
     </div>
   )
 }
