@@ -2,7 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
 import { sources } from '../../src/assets/assets'
-import { Plus } from 'lucide-react'
+import { Images, Info, Plus, PlusCircle } from 'lucide-react'
 
 
 
@@ -15,27 +15,31 @@ const CreateItems = () => {
   const [descriptionInput, setDescriptionInput] = useState('')
   const [categoryInput, setCategoryInput] = useState('Select')
   const [sourceInput, setSourceInput] = useState('Source')
-  const [qtyInput, setQtyInput] = useState()
-  const [costInput, setCostInput] = useState()
-  const [detailsInput, setDetailsInput] = useState('')
   const [isViewCategory, setViewCategory] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
-  const [holdInfos, setHoldInfos] = useState([])
+  const [holdInfos, setHoldInfos] = useState([
+    {qty: "", cost: "", details: ""}
+  ])
+  const [images, setImages] = useState([])
 
-useEffect(()=>{
-  
-  if(!isNaN(qtyInput) && !isNaN(costInput) && qtyInput && costInput && detailsInput && detailsInput.trim() ){
-    console.log('value: true');
-  }
-  else console.log('value: false');
-
-}, [qtyInput, costInput, detailsInput])
-  
   
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
             console.log(value, ':', input);
         }
+  }
+
+  const handleChange = (e, field, index)=>{
+    const update = [...holdInfos];
+    update[index][field] = e;
+    setHoldInfos(update)
+  }
+
+  const addNewBlock = ()=>{
+    const newd = [...holdInfos, {qty: "", cost: "", details: ""}];
+    setHoldInfos(newd);
+    console.log(newd);
+    
   }
 
   const handleRadio = (e, input, type)=>{
@@ -106,9 +110,9 @@ useEffect(()=>{
           {/* description */}
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Description</h2>
-            <input 
-            type='text' onKeyDown={(e)=>(handleShow(e, 'Description', descriptionInput))} value={descriptionInput} placeholder='Enter the item name ...' onChange={((e)=>(setDescriptionInput(e.target.value)))} 
-            className={`focus:ring-2 flex-1 h-15 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            <textarea 
+            onKeyDown={(e)=>(handleShow(e, 'Description', descriptionInput))} value={descriptionInput} placeholder='Enter the item name ...' onChange={((e)=>(setDescriptionInput(e.target.value)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
           </div>
           {/* category */}
@@ -122,7 +126,7 @@ useEffect(()=>{
             {isViewCategory && (
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
-                   <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                   <div className='absolute top-63 right-1 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
                         {categories.map((cat, index)=>(
                         <label key={cat.category_id} onClick={(e)=>(handleRadio(e, cat.category_name, 'cat'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
@@ -146,7 +150,7 @@ useEffect(()=>{
             {isViewSource && (
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/10 transition-all duration-500 ease-in-out w-full h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
-                   <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                   <div ref={ref} className='absolute top-71 right-5 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
                         {sources.map((s)=>(
                         <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
@@ -167,13 +171,15 @@ useEffect(()=>{
         infos
       -----------------------------------------*/}
 
-        <div>
+        <div className='flex flex-col'>
           <p className='text-blue-500'>Infos</p>
+          {holdInfos.map((i, index)=>(
+            <div key={index} className={`${index !== 0 && 'border-t border-blue-200 transition-all duration-700 ease-in'}`}>
           {/* Qty */}
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Quantity <span className='text-red-500'>*</span></h2>
             <input 
-            type='number' onKeyDown={(e)=>(handleShow(e, 'Qty', qtyInput))} value={qtyInput} placeholder='Enter the quantity ...' onChange={((e)=>(setQtyInput(e.target.value)))} 
+            type='number' value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e.target.value, 'qty', index)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
           </div>
@@ -181,22 +187,26 @@ useEffect(()=>{
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
             <input 
-            type='number' onKeyDown={(e)=>(handleShow(e, 'Cost', costInput))} value={costInput} placeholder='Enter the cost ...' onChange={((e)=>(setCostInput(e.target.value)))} 
+            type='number' value={i.cost} placeholder='Cost' onChange={((e)=>(handleChange(e.target.value, 'cost', index)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
           </div>
           {/* details */}
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Details</h2>
-            <input 
-            type='text' onKeyDown={(e)=>(handleShow(e, 'Details', detailsInput))} value={detailsInput} placeholder='Enter the details ...' onChange={((e)=>(setDetailsInput(e.target.value)))} 
+            <textarea
+            type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleChange(e.target.value, 'details', index)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
           </div>
-
-
-
+          <div className={`w-full ${i.qty && i.cost && i.details && holdInfos.length - 1 === index ? 'block': 'hidden'} transitiion-all duration-800 ease-in flex justify-end items-center bg-red-5000`}>
+            <PlusCircle onClick={()=>(addNewBlock())} className='text-blue-500 transitiion-all duration-900 ease-in' />
+          </div>
+          </div>
+          ))}
         </div>
+        </div>
+
 
       {/*-----------------------------------------
         thumbnails
@@ -206,25 +216,25 @@ useEffect(()=>{
           <p className='text-blue-500'>Thumbnails <span className='text-red-500'>*</span></p>
           <div className='flex border border-gray-200 p-1 m-1 h-60 w-full overflow-x-auto'>
             <div className='flex gap-2 p-1'>
-              <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
+              {images.map((i, index)=>(
+                <label key={index} onDrop={(e)=>{
+                e.preventDefault()
+                if(e.dataTransfer.files && e.dataTransfer.files[0]){
+                  setImages([...images, e.dataTransfer.files[0]])
+                }
+              }}
+              className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
+                  <input type='file' accept='image/*' className='hidden'
+                  onChange={(e)=>{
+                    if(e.target.files && e.target.files[0]) setImages([...Images, e.target.files[0]])
+                  }} />
                   <Plus size={50} className=' font-extralight text-sm'/>
                   <p>Add Image</p>
-              </div>
-                            <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
-                  <Plus size={50} className=' font-extralight text-sm'/>
-                  <p>Add Image</p>
-              </div>
-
-              <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
-                  <Plus size={50} className=' font-extralight text-sm'/>
-                  <p>Add Image</p>
-              </div>
-
-
+              </label>
+              ))}
             </div>
           </div>
         </div>
-      </div>
     </div>
   )
 }
