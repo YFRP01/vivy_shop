@@ -4,6 +4,8 @@ import { API_URL } from '../../api'
 import { sources } from '../../src/assets/assets'
 import { Plus } from 'lucide-react'
 
+
+
 const CreateItems = () => {
 
   const ref = useRef()
@@ -11,15 +13,25 @@ const CreateItems = () => {
   const [categories, setCategories] = useState([])
   const [nameInput, setNameInput] = useState('')
   const [descriptionInput, setDescriptionInput] = useState('')
-  const [categoryInput, setCategoryInput] = useState('Choose')
+  const [categoryInput, setCategoryInput] = useState('Select')
   const [sourceInput, setSourceInput] = useState('Source')
   const [qtyInput, setQtyInput] = useState()
   const [costInput, setCostInput] = useState()
   const [detailsInput, setDetailsInput] = useState('')
   const [isViewCategory, setViewCategory] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
+  const [holdInfos, setHoldInfos] = useState([])
 
+useEffect(()=>{
+  
+  if(!isNaN(qtyInput) && !isNaN(costInput) && qtyInput && costInput && detailsInput && detailsInput.trim() ){
+    console.log('value: true');
+  }
+  else console.log('value: false');
 
+}, [qtyInput, costInput, detailsInput])
+  
+  
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
             console.log(value, ':', input);
@@ -76,7 +88,7 @@ const CreateItems = () => {
     }, [])
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col h-full w-full p-1'>
       {/*-----------------------------------------
         items
       -----------------------------------------*/}
@@ -108,9 +120,9 @@ const CreateItems = () => {
               </button>
             </div>
             {isViewCategory && (
-                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-screen h-screen z-100'>
+                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
-                   <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                   <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
                         {categories.map((cat, index)=>(
                         <label key={cat.category_id} onClick={(e)=>(handleRadio(e, cat.category_name, 'cat'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
@@ -132,9 +144,9 @@ const CreateItems = () => {
               </button>
             </div>
             {isViewSource && (
-                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/10 transition-all duration-500 ease-in-out w-screen h-screen z-100'>
+                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/10 transition-all duration-500 ease-in-out w-full h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
-                   <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                   <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
                         {sources.map((s)=>(
                         <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
@@ -190,22 +202,25 @@ const CreateItems = () => {
         thumbnails
       -----------------------------------------*/}
 
-        <div className=''>
+        <div className='w-full'>
           <p className='text-blue-500'>Thumbnails <span className='text-red-500'>*</span></p>
-          <div className='overflow-x-auto'>
-            <div className='flex border p-3 gap-3 w-fit h-60'>
+          <div className='flex border border-gray-200 p-1 m-1 h-60 w-full overflow-x-auto'>
+            <div className='flex gap-2 p-1'>
               <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
                   <Plus size={50} className=' font-extralight text-sm'/>
                   <p>Add Image</p>
               </div>
+                            <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
+                  <Plus size={50} className=' font-extralight text-sm'/>
+                  <p>Add Image</p>
+              </div>
+
               <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
                   <Plus size={50} className=' font-extralight text-sm'/>
                   <p>Add Image</p>
               </div>
-              <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
-                  <Plus size={50} className=' font-extralight text-sm'/>
-                  <p>Add Image</p>
-              </div>
+
+
             </div>
           </div>
         </div>
@@ -213,5 +228,7 @@ const CreateItems = () => {
     </div>
   )
 }
+
+
 
 export default CreateItems

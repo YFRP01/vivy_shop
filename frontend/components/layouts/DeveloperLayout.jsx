@@ -7,19 +7,18 @@ const DeveloperLayout = () => {
   const [selectedMethod, setSelectedMethod] = useState(0)
   const pages = [
     {"id": 0, "title": "Create" , "nav": '/developer' },
-    {"id": 1, "title": "All items" , "nav": '/developer/items' },
-    {"id": 2, "title": "Categories" , "nav": '/developer/categories' },
+    {"id": 1, "title": "Categories" , "nav": '/developer/categories' },
   ]
 
   const methods = [
-    {"id": 0, "title":"POST", "nav": "/post" },
-    {"id": 1, "title":"EDIT", "nav": "/edit" }
+    {"id": 0, "title":"POST", "nav": '/developer' },
+    {"id": 1, "title":"EDIT", "nav": '/developer/items' }
   ]
 
   const navigate = useNavigate()
   const [selectedPage, setSelectedPage] = useState(0)
   return (
-    <div className='flex flex-col px-1'>
+    <div className='flex flex-col px-1 w-screen h-screen'>
         <div className='flex items-end gap-3 w-full px-3 pb-1 pt-5 border-b border-blue-100'>
             {pages.map((page)=>(
               <div key={page.id} className={`${selectedPage === page.id && 'border-b border-blue-500 text-blue-500'} transition-colors duration-400 0ease-in-out`}
@@ -27,13 +26,13 @@ const DeveloperLayout = () => {
               </div>
             ))}  
         </div>    
-        <div className='bg-white flex gap-1'>
-          <div className='w-20 md:w-26 py-4 flex flex-col gap-2 bg-gray-100 border-r-blue-200'>
+        <div className='bg-white flex gap-1 h-full'>
+          <div className='fixed w-16 md:w-26 py-4 flex flex-col gap-2 bg-gray-100 border-r h-full border-blue-200'>
             {methods.map((m)=>(
-              <p className={`${selectedMethod === m.id ? 'bg-blue-300 hover:bg-blue-200' : 'text-blue-400 hover:bg-blue-100' } p-2 text-sm`} key={m.id} onClick={()=>(navigate(m.nav))}>{m.title}</p>
+              <p className={`${selectedMethod === m.id ? 'bg-blue-300 hover:bg-blue-200' : 'text-blue-400 hover:bg-blue-100' } p-2 text-sm transition-all duration-200 ease-in-out`} key={m.id} onClick={()=>(setSelectedMethod(m.id), navigate(m.nav))}>{m.title}</p>
             ))}
           </div>
-          <Outlet />
+          <div className='pl-17 w-full'><Outlet /></div>
         </div>
     </div>
   )
