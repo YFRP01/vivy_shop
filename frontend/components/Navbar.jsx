@@ -87,7 +87,7 @@ const Navbar = () => {
     <nav className='fixed z-50 w-full top-0 left-0 right-0 transition-all duration-700 ease-in-out'>
         {/* Top nav */}
         <div className='sticky w-full flex items-center z-1 justify-between p-2 px-5 bg-[#066e3b]'>
-            <div onClick={()=>(navigate(`/?category=${category}`))} className='flex items-center cursor-pointer gap-2.5 text-white font-bold text-2xl'>
+            <div onClick={()=>(navigate('/developer'))} /*onClick={()=>(navigate(`/?category=${category}`))}*/ className='flex items-center cursor-pointer gap-2.5 text-white font-bold text-2xl'>
                 {/* <Home className='w-7 h-7 text-[#10b981]' /> */}
                 <span>LOGO</span>
             </div>
@@ -127,7 +127,6 @@ const Navbar = () => {
                 <button onClick={()=>(setIsMenuOpen(!isMenuOpen))} className={`${location.pathname.includes('item')? 'hidden' : 'block'} flex items-center justify-center relative rounded-full p-1 backdrop-blur-2xl hover:bg-green-900/30 transition-colors duration-300 ease-in`}>
                     <Menu className='w-5 h-5 text-green-200'/>
                 </button>
-
             </div>
         </div>
 
