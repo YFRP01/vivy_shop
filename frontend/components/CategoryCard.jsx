@@ -7,11 +7,11 @@ const CategoryCard = ({cat}) => {
     const category = searchParams.get('category') || 'all';
 
     const handleClick = (category)=>{
-        if(cat.value === category){
+        if(cat.category_name === category){
             setsearchParams({category:'all'})
         }
         else{
-          setsearchParams({category:cat.value})
+          setsearchParams({category:cat.category_name})
         }
     }
     useEffect(()=>(
@@ -19,11 +19,11 @@ const CategoryCard = ({cat}) => {
     ),[category])
 
   return (
-    <div onClick={()=>(handleClick(category))} className={`flex flex-col hover:scale-102 ${category === cat.value && 'border-2 scale-102 border-green-500'} h-45 w-35 md:w-42 rounded-2xl bg-black/20`}>
+    <div onClick={()=>(handleClick(category))} className={`flex flex-col hover:scale-102 ${category === cat.category_name && 'border-2 scale-102 border-green-500'} h-45 w-35 md:w-42 rounded-2xl bg-black/20`}>
         <div className='flex-3 flex border-b border-gray-500'>
-            <img src={cat.image} alt={`${cat.value} image`} className='object-cover bg-gray-400 rounded-t-2xl text-sm md:text-md text-gray-500 flex items-center justify-center text-center w-full h-full' />
+            <img src={cat.image} alt={`${cat.category_name} image`} className='object-cover bg-gray-400 rounded-t-2xl text-sm md:text-md text-gray-500 flex items-center justify-center text-center w-full h-full' />
         </div>
-        <div className='flex-1 flex w-full text-sm font-normal justify-center items-center'>{cat.value}</div>
+        <div className='flex-1 flex w-full text-sm font-normal justify-center items-center'>{cat.category_name}</div>
     </div>
   )
 }

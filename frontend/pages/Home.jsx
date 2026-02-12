@@ -51,8 +51,8 @@ const Home = () => {
         <div className='flex flex-col w-full h-full bg-white'>
             <div className='w-full px-5 shadow py-1 bg-gray-100 text-lg  font-sans'>Categories ({categories.length})</div>
             <div className='flex bg-white px-5 overflow-x-scroll h-60 items-center gap-2'>
-                {categories.map((cat, index)=>(
-                    <div key={index} className=''>
+                {categories.map((cat)=>(
+                    <div key={cat.category_id} className=''>
                         <CategoryCard cat={cat} />
                     </div>
                 ))}

@@ -19,7 +19,7 @@ router.get("/", async (req, res) => {
         SELECT 
           i.item_id, 
           i.name, 
-          i.category, 
+          (SELECT c.category_name FROM categories c WHERE i.category_id = c.category_id) AS category, 
           i.liked,
           (SELECT th.image FROM thumbnails th 
             WHERE th.item_id = i.item_id 
@@ -66,10 +66,10 @@ router.get('/:id', async (req, res) => {
         (SELECT json_build_object(
 			'item_id', i.item_id,
         	'name', i.name,
-        	'category', i.category,
+        	'category', c.category_name,
         	'liked', i.liked,
         	'created_at', i.created_at
-		)) AS item,
+		) FROM categories c WHERE i.category_id = c.category_id ) AS item,
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(

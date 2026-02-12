@@ -134,14 +134,14 @@ const Navbar = () => {
         <div className={`transform ${isMenuOpen ? 'translate-y-0': '-translate-y-120'} transition-all duration-700 ease-in-out`}>
         {isMenuOpen && (
             <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-4 py-3 bg-linear-to-b bg-green-700 backdrop-blur-sm border-t border-white/20'>
-                {categories.map((category, index)=>(
-                    <div key={index} onClick={()=>(handleCategory(category.value))}
+                {categories.map((category)=>(
+                    <div key={category.category_id} onClick={()=>(handleCategory(category.category_name))}
                     className={`flex items-center space-x-3 p-3 rounded-xl justify-center transition-all duration-300 
-                        ${ selectedCat === category.value
+                        ${ selectedCat === category.category_name
                             ? 'bg-white/30 text-white'
                             : 'bg-blue-500/50 text-white/90 hover:bg-white/20 border-b w-full text-start cursor-pointer'}`}>
-                            {category.value}
-                            {category.value.length > 25 && '...'}
+                            {category.category_name}
+                            {category.category_name.length > 25 && '...'}
                     </div>
                 ))}
             </div>
