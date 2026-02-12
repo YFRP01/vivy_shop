@@ -22,8 +22,8 @@ const ViewMore = ({item, info, order_status, editLike, like, isView, setIsView})
 
     return (
         <div className={`fixed left-0 right-0 top-0 bottom-0 h-screen bg-black/20  w-screen z-11 ${isView ? 'block':'hidden'}`}>
-            <div className='flex flex-col px-10 md:px-25 lg:px-30 items-center justify-center h-full'>
-                <div ref={modalRef} className={`border relative h-80 bg-white border-blue-400 rounded-2xl flex flex-col items-center justify-center`}>
+            <div className='flex flex-col px-10 md:px-25 lg:px-30 xl:px-45 2xl:px-55 items-center justify-center h-full'>
+                <div ref={modalRef} className={`border relative h-80 w-full bg-white border-blue-400 rounded-2xl flex flex-col items-center justify-center`}>
                     <div className='p-2 py-5 w-full h-full flex flex-col items-center justify-start wrap-break-word overflow-y-auto'>
                         <div className='flex w-full relative'>
                             <div className='flex-1'><div className='w-full flex items-start gap-1'><p className='font-serif'>Name:</p> <p className='font-normal text-sm'>{item.name}</p></div>
@@ -36,7 +36,7 @@ const ViewMore = ({item, info, order_status, editLike, like, isView, setIsView})
                         (<Heart size={50} className='fill-gray-600  text-gray-600' onClick={()=>(editLike())}/>)}
                         </button> 
                         </div>
-                        <div className='w-full flex items-start gap-1'><p className='font-serif'>Details:</p> <p className='font-normal text-sm'>{info.details} {info.details} {info.details}</p></div>
+                        <div className='w-full flex items-start gap-1'><p className='font-serif'>Description:</p> <p className='font-normal text-sm'>{item.description}</p></div>
                         <div className='w-full flex items-start gap-1'><p className='font-serif'>Quantity:</p> <p className='font-normal text-sm'>{info.qty}</p></div>
                         <div className='w-full flex items-start gap-1'><p className='font-serif'>Cost:</p> <p className='font-normal text-sm'>{info.cost}</p></div>
                         <div className='w-full flex items-center gap-1'><p className='font-serif'>Ordered: </p><p className='flex'>{order_status? 

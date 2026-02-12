@@ -68,6 +68,7 @@ router.get('/:id', async (req, res) => {
         	'name', i.name,
         	'category', c.category_name,
         	'liked', i.liked,
+          'description', i.description,
         	'created_at', i.created_at
 		) FROM categories c WHERE i.category_id = c.category_id ) AS item,
         COALESCE(

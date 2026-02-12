@@ -2,6 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
 import { sources } from '../../src/assets/assets'
+import { Plus } from 'lucide-react'
 
 const CreateItems = () => {
 
@@ -12,8 +13,12 @@ const CreateItems = () => {
   const [descriptionInput, setDescriptionInput] = useState('')
   const [categoryInput, setCategoryInput] = useState('Choose')
   const [sourceInput, setSourceInput] = useState('Source')
+  const [qtyInput, setQtyInput] = useState()
+  const [costInput, setCostInput] = useState()
+  const [detailsInput, setDetailsInput] = useState('')
   const [isViewCategory, setViewCategory] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
+
 
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
@@ -22,20 +27,24 @@ const CreateItems = () => {
   }
 
   const handleRadio = (e, input, type)=>{
-    if(type === 'cat'){
-      setCategoryInput(input)
-      setViewCategory(false)
+    if(type.includes('cat')){
+        setTimeout(() => {
+          setCategoryInput(input)
+          setViewCategory(false)
+        }, 300);
     }
-    else if(type === 'source') {
-      setSourceInput(input)
-      setViewSource(false)
+    else if(type.includes('source')) {
+        setTimeout(() => {
+          setSourceInput(input)
+          setViewSource(false)
+        }, 300);
     }
     else {
       console.log('error');
       return null
     }
     
-    console.log(`Category: ${input}`);
+    console.log(`${type}: ${input}`);
     
   }
 
@@ -56,6 +65,7 @@ const CreateItems = () => {
     const handle = (event) => {
         if(ref.current && !ref.current.contains(event.target)){
             setViewCategory(false)
+            setViewSource(false)
         }
     }
 
@@ -66,18 +76,20 @@ const CreateItems = () => {
     }, [])
 
   return (
-    <div className='flex flex-col flex-wrap'>
-        {/*items*/}
+    <div className='flex flex-col'>
+      {/*-----------------------------------------
+        items
+      -----------------------------------------*/}
         <div className='flex flex-col gap-2'>
           <div className=''>
           <p className='text-blue-500'>Item</p>
             {/* name */}
           <div className='flex gap-2 p-1'>
-            <h2 className='font-medium'>Name</h2>
+            <h2 className='font-medium'>Name <span className='text-red-500'>*</span></h2>
             <input 
             type='text' onKeyDown={(e)=>(handleShow(e, 'Name', nameInput))} value={nameInput} placeholder='Enter the item name ...' onChange={((e)=>(setNameInput(e.target.value)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            />
+            required/>
           </div>
           {/* description */}
           <div className='flex gap-2 p-1'>
@@ -90,7 +102,7 @@ const CreateItems = () => {
           {/* category */}
           <div className='flex gap-2 p-1 relative'>
             <div className='flex gap-2'>
-              <p className='font-medium'>Category</p>
+              <p className='font-medium'>Category <span className='text-red-500'>*</span></p>
               <button onClick={()=>(setViewCategory(!isViewCategory))} className='border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'>
                 {categoryInput}
               </button>
@@ -99,10 +111,10 @@ const CreateItems = () => {
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-screen h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
                    <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
-                        {categories.map((cat)=>(
+                        {categories.map((cat, index)=>(
                         <label key={cat.category_id} onClick={(e)=>(handleRadio(e, cat.category_name, 'cat'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
-                            type='radio' onChange={(e)=>(setCategoryInput(e.target.value))} value={cat.category_name} name='category' />
+                            type='radio' onChange={(e)=>(setCategoryInput(e.target.value))} value={cat.category_name} name='category' required={index === 0}/>
                             {cat.category_name}
                         </label>
                       ))}
@@ -115,14 +127,14 @@ const CreateItems = () => {
           <div className='flex gap-2 p-1 relative'>
             <div className='flex gap-2'>
               <p className='font-medium'>Source</p>
-              <button onClick={()=>(setSourceInput(!isViewSource))} className='border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'>
+              <button onClick={()=>(setViewSource(!isViewSource))} className='border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'>
                 {sourceInput}
               </button>
             </div>
             {isViewSource && (
-                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-screen h-screen z-100'>
+                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/10 transition-all duration-500 ease-in-out w-screen h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
-                   <div /*ref={ref}*/ className='absolute top-60 w-64 transition-all duration-500 ease-in-out h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                   <div ref={ref} className='absolute top-60 w-64 transition-all duration-500 ease-in-out h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
                         {sources.map((s)=>(
                         <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
@@ -136,17 +148,66 @@ const CreateItems = () => {
             )} 
           </div>
 
-                      {/* <input 
-            type='radio' name='category' onKeyDown={(e)=>(handleShow(e, 'Category', categoryInput))} value={categoryInput} placeholder='Enter the item category ...' onChange={((e)=>()} 
-            className={`focus:ring-2 outline-none ring-blue-500 bg-gray-600 px-2 text-gray-800` }
-            /> */}
 
         </div>
+
+      {/*-----------------------------------------
+        infos
+      -----------------------------------------*/}
+
         <div>
           <p className='text-blue-500'>Infos</p>
+          {/* Qty */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Quantity <span className='text-red-500'>*</span></h2>
+            <input 
+            type='number' onKeyDown={(e)=>(handleShow(e, 'Qty', qtyInput))} value={qtyInput} placeholder='Enter the quantity ...' onChange={((e)=>(setQtyInput(e.target.value)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            required/>
+          </div>
+          {/* cost */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
+            <input 
+            type='number' onKeyDown={(e)=>(handleShow(e, 'Cost', costInput))} value={costInput} placeholder='Enter the cost ...' onChange={((e)=>(setCostInput(e.target.value)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            required/>
+          </div>
+          {/* details */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Details</h2>
+            <input 
+            type='text' onKeyDown={(e)=>(handleShow(e, 'Details', detailsInput))} value={detailsInput} placeholder='Enter the details ...' onChange={((e)=>(setDetailsInput(e.target.value)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            />
+          </div>
+
+
+
         </div>
-        <div>
-          <p className='text-blue-500'>Thumbnails</p>
+
+      {/*-----------------------------------------
+        thumbnails
+      -----------------------------------------*/}
+
+        <div className=''>
+          <p className='text-blue-500'>Thumbnails <span className='text-red-500'>*</span></p>
+          <div className='overflow-x-auto'>
+            <div className='flex border p-3 gap-3 w-fit h-60'>
+              <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
+                  <Plus size={50} className=' font-extralight text-sm'/>
+                  <p>Add Image</p>
+              </div>
+              <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
+                  <Plus size={50} className=' font-extralight text-sm'/>
+                  <p>Add Image</p>
+              </div>
+              <div className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
+                  <Plus size={50} className=' font-extralight text-sm'/>
+                  <p>Add Image</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

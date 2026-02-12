@@ -157,8 +157,9 @@ const ItemDetails = () => {
             </div>
         </div>
         <div className='flex flex-col justify-center relative w-full p-2 pr-20 bg-blue-200'>
-            <p className='flex break-all flex gap-1 flex-wrap break-word'><span>Name:</span><span className='flex-1'> {item.name}</span></p>
+            <p className='flex break-all gap-1 flex-wrap break-word'><span>Name:</span><span className='flex-1'> {item.name}</span></p>
             <p className='flex gap-1 flex-wrap break-word'><span className=''>Category:</span><span className='flex-1'> {item.category}</span></p>            
+            <p className='flex gap-1 flex-wrap break-word'><span className=''>Description:</span><span className='flex-1'> {item.description}</span></p>            
             <button className='absolute right-2 '>
                     {editLike ?(<Heart onClick={()=>(likeFunc())} className='w-15 h-15 text-red-500 fill-red-500 transition-colors duration-100 ease-in-out'/>):((<Heart onClick={()=>(likeFunc())} className='w-15 h-15 fill-gray-500 text-gray-500 transition-colors duration-100 ease-in-out' />))}
             </button>

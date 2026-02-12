@@ -12,7 +12,7 @@ const DeveloperLayout = () => {
   const [selectedPage, setSelectedPage] = useState(0)
   return (
     <div className='flex flex-col px-1'>
-        <div className='flex items-end gap-3 px-3 pb-1 pt-5 border-b border-blue-100'>
+        <div className='flex items-end gap-3 w-full px-3 pb-1 pt-5 border-b border-blue-100'>
             {pages.map((page)=>(
               <div key={page.id} className={`${selectedPage === page.id && 'border-b border-blue-500 text-blue-500'} transition-colors duration-400 0ease-in-out`}
                   onClick={()=>(setSelectedPage(page.id), navigate(`${page.nav}`))}>{page.title}

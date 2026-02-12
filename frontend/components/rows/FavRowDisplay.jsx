@@ -25,6 +25,7 @@ const FavRowDisplay = ({item, info, order_status}) => {
             <div onClick={()=>(setViewDetails(!viewDetails))} className={`flex cursor-pointer`} >
                 <div className='border flex justify-center items-center p-1 flex-2 '>{item.name}</div>
                 <div className='border flex justify-center items-center'>{item.category}</div>
+                <div className='border flex justify-center items-center p-1 flex-4 '>{item.description}</div>
                 <div className='border flex justify-center items-center p-1 flex-4 '>{info.details}</div>
                 <div className='border flex justify-center items-center p-1 flex-1 '>{info.qty}</div>
                 <div className='border flex justify-center items-center p-1 flex-1 '>{info.cost}</div>

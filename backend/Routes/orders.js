@@ -15,6 +15,7 @@ router.get("/", async(req, res)=>{
 			'item_id', i.item_id,
 			'name', i.name,
 			'liked', i.liked,
+            'description', i.description,
             'category', c1.category_name
 			) FROM categories c1 WHERE c1.category_id = i.category_id ) AS item,
         o.order_id,
