@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
 import { assets, sources } from '../../src/assets/assets'
 import { Edit, Edit2, Images, Info, Plus, PlusCircle, X } from 'lucide-react'
+import PreviewImage from '../../components/PreviewImage'
 
 
 const CreateItems = () => {
@@ -16,6 +17,8 @@ const CreateItems = () => {
   const [sourceInput, setSourceInput] = useState('Source')
   const [isViewCategory, setViewCategory] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
+  const [isPreviewCard, setIsPreviewCard] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [holdInfos, setHoldInfos] = useState([
     {qty: "", cost: "", details: ""}
   ])
@@ -219,14 +222,13 @@ const CreateItems = () => {
           <p className='text-blue-500'>Thumbnails <span className='text-red-500'>*</span></p>
           <div className='flex border border-gray-200 p-1 gap-3 w-full m-1 h-60 overflow-x-auto'>
             <div className='flex gap-2 p-1'>
-                {images?.map((i)=>(
-                <label key={i.id} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
-                    <img key={i.id} src={i.image} alt={`${i.name} image`} className='object-cover'/>
+                {images?.map((i, index)=>(
+                <label key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
+                    <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} src={i.image} alt='preview' className='object-cover border border-gray-200'/>
                     <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full bg-white h-5'>
                       <X size='20' className='text-red-500'/>
                       <Edit2 size='17' className='text-gray-500'/>
                     </div>
-                 
                  </label>
                 ))}
                 <label onDrop={(e)=>{
@@ -247,6 +249,7 @@ const CreateItems = () => {
             </div>
           </div>
         </div>
+          {isPreviewCard && <PreviewImage image={images[selectedImageIndex].image} setIsOpen={setIsPreviewCard}/>}  
     </div>
   )
 }
