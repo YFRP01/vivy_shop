@@ -2,7 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
 import { assets, sources } from '../../src/assets/assets'
-import { Edit, Edit2, Images, Info, Plus, PlusCircle, X } from 'lucide-react'
+import { ArrowDownCircle, ArrowDownCircleIcon, ArrowUpCircle, Edit, Edit2, Images, Info, MinusCircle, Plus, PlusCircle, PlusSquare, X } from 'lucide-react'
 import PreviewImage from '../../components/PreviewImage'
 
 
@@ -18,6 +18,10 @@ const CreateItems = () => {
   const [isViewCategory, setViewCategory] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
   const [isPreviewCard, setIsPreviewCard] = useState(false)
+  const [categoryLCheck, setCategoryLCheck] = useState(false)
+  const [isRadioSelected, setIsRadioSelected] = useState(false)
+  const [viewCat, setViewCat] = useState(false)
+  const [catImages, setCatImages] = useState()
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [holdInfos, setHoldInfos] = useState([
     {qty: "", cost: "", details: ""}
@@ -35,6 +39,8 @@ const CreateItems = () => {
       setSourceInput('')
       setHoldInfos([{qty: "", cost: "", details: ""}])
       setImages([])
+      setCatImages({})
+      setCategoryLCheck(false)
   }
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
@@ -64,10 +70,18 @@ const CreateItems = () => {
     } 
     setImages((prev)=>[...prev, ...update])
     e.target.value=""
-    console.log(images);
-    
   }
 
+  const handleInsertCategoryImage = (e)=>{
+    const file = e.target.files[0]
+    const update = {file, image_url: URL.createObjectURL(file)}
+    if(!file) return;
+    setCatImages(update)
+    console.log(`true, ${catImages}`);
+    e.target.value=""
+    
+
+  }
   const handleDeleteImage = (index) =>{
     setImages((prev)=>prev.filter((_, i)=> i !== index))
   }
@@ -84,6 +98,8 @@ const CreateItems = () => {
         setTimeout(() => {
           setCategoryInput(input)
           setViewCategory(false)
+          setCategoryLCheck(false)
+          setIsRadioSelected(true)
         }, 300);
     }
     else if(type.includes('source')) {
@@ -97,7 +113,6 @@ const CreateItems = () => {
       return null
     }
     
-    console.log(`${type}: ${input}`);
     
   }
 
@@ -162,12 +177,27 @@ const CreateItems = () => {
             />
           </div>
           {/* category */}
-          <div className='flex gap-2 p-1 relative'>
-            <div className='flex gap-2'>
-              <p className='font-medium'>Category <span className='text-red-500'>*</span></p>
-              <button onClick={()=>(setViewCategory(!isViewCategory))} className='border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'>
-                {categoryInput? categoryInput: 'select'}
-              </button>
+          <div className='flex  gap-2 w-full p-1 relative'>
+            <p className='flex gap-1 font-medium'>Category <span className='text-red-500'>*</span></p>
+            <div className='flex flex-col lg:flex-row lg:items-center gap-1 w-full'>
+              <div className='lg:flex-1 flex items-center justify-center gap-2'>
+                <label className='w-full flex items-center '>
+                <textarea placeholder='select' value={categoryInput} onClick={()=>(setViewCategory(!isViewCategory))} 
+                className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
+                </label>
+              <div className={`flex items-center justify-center lg:hidden w-8 `}>{viewCat ? (<ArrowDownCircle onClick={()=>(setViewCat(!viewCat))} size={25} className='text-blue-500 transition-all duration-150 ease-in'/>): (<ArrowUpCircle onClick={()=>(setViewCat(!viewCat))} size={25} className='text-green-500 transition-all duration-150 ease-in'/>)}</div>
+            </div>
+                <div className={`lg:flex-1 h-full items-center lg:flex justify-center flex-nowrap ${viewCat ? 'max-lg:flex': 'max-lg:hidden'} transition-all duration-400 ease-in-out gap-2`}>
+                    <label className='w-full flex items-center'>
+                      <textarea type='text' 
+                      className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
+                      placeholder='Custom name ...' value={categoryInput} onChange={(e)=>(setCategoryLCheck(true), setIsRadioSelected(false), setCategoryInput(e.target.value))}/>
+                    </label>
+                      <label className='flex items-center justify-center w-8 '>
+                      {catImages? (<PlusSquare size={20} className={`${categoryLCheck && !isRadioSelected ? 'text-green-500':'text-orange-500'}`}/>):(<MinusCircle size={20} className={`${categoryLCheck? 'text-orange-500':'text-gray-500'}`}/>)}
+                      <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
+                    </label>
+                </div>
             </div>
             {isViewCategory && (
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-53'>
@@ -189,7 +219,7 @@ const CreateItems = () => {
           <div className='flex gap-2 p-1 relative'>
             <div className='flex gap-2'>
               <p className='font-medium'>Source</p>
-              <button onClick={()=>(setViewSource(!isViewSource))} className='border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'>
+              <button onClick={()=>(setViewSource(!isViewSource))} className='border border-gray-500 min-w-30 cursor-pointer text-gray-500 px-1 rounded-sm'>
                 {sourceInput? sourceInput:'select'}
               </button>
             </div>
