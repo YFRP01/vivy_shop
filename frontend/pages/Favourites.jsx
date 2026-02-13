@@ -30,7 +30,7 @@ const Favourites = () => {
         <div>
             <div className='w-full flex flex-col gap-2 overflow-x-auto'>
             {itemArray.length === 0 ? 
-            (<div className='w-full h-full text-gray-600 py-80 absolute flex items-center justify-center'>No element found for the category "{category}".</div>)
+            (<div className='w-full h-full text-gray-600 py-80 absolute flex items-center justify-center'>No liked element found for the category "{category}".</div>)
             :
             (itemArray.map((i, index)=>(
                 <div key={index} className='flex bg-gray-400 border'>

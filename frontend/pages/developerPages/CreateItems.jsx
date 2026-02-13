@@ -23,8 +23,8 @@ const CreateItems = () => {
     {qty: "", cost: "", details: ""}
   ])
   const [images, setImages] = useState([
-    {"id": 0, "name": "image_01", "image": assets.image_two},
-    {"id": 1, "name": "image_02", "image": assets.react_image}
+    {"file": "image_01", "image_url": assets.image_two},
+    {"file": "image_02", "image_url": assets.react_image}
 
   ])
 
@@ -46,6 +46,30 @@ const CreateItems = () => {
     setHoldInfos(newd);
     console.log(newd);
     
+  }
+
+  const handleInsertImage = (e)=>{
+    const files = e.target.files;
+    const update = []
+    if(files) return
+    for(let i=0; i < files.length; i++){
+        update.push({file: files[i], image_url: URL.createObjectURL(files[i])})
+    } 
+    setImages((prev)=>[...prev, ...update])
+    e.target.value=""
+    console.log(images);
+    
+  }
+
+  const handleDeleteImage = (index) =>{
+    setImages((prev)=>prev.filter((_, i)=> i !== index))
+  }
+
+  const handleEditImage = (e, index)=>{
+    const file= e.target.files[0]
+    if(!file) return;
+    const update = {image_url: URL.createObjectURL(file), file}
+    setImages((prev)=>prev.map((img, i)=>( i=== index ? update : img)))
   }
 
   const handleRadio = (e, input, type)=>{
@@ -185,7 +209,7 @@ const CreateItems = () => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Quantity <span className='text-red-500'>*</span></h2>
             <input 
-            type='number' value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e.target.value, 'qty', index)))} 
+            type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e.target.value, 'qty', index)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
           </div>
@@ -224,24 +248,20 @@ const CreateItems = () => {
             <div className='flex gap-2 p-1'>
                 {images?.map((i, index)=>(
                 <label key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
-                    <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} src={i.image} alt='preview' className='object-cover border border-gray-200'/>
-                    <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full bg-white h-5'>
-                      <X size='20' className='text-red-500'/>
-                      <Edit2 size='17' className='text-gray-500'/>
+                    <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} src={i.image_url} alt='preview' className='w-full h-full object-cover border border-gray-200'/>
+                    <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
+                      <X onClick={()=>(handleDeleteImage(index))} size='20' className='text-red-500'/>
+                      <div className='text-gray-500'>
+                        <Edit size='17' className='text-gray-500'/>
+                        <input onChange={(e)=>(handleEditImage(e, index))} multiple type='file' accept='image/*' className='bg-red-500 hidden w-5' />
+                      </div>
                     </div>
                  </label>
                 ))}
-                <label onDrop={(e)=>{
-                e.preventDefault()
-                if(e.dataTransfer.files && e.dataTransfer.files[0]){
-                  setImages([...images, e.dataTransfer.files[0]])
-                }
-              }}
+                <label
               className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
-                  <input type='file' accept='image/*' className='hidden'
-                  onChange={(e)=>{
-                    if(e.target.files && e.target.files[0]) setImages([...Images, e.target.files[0]])
-                  }} />
+                  <input type='file' multiple accept='image/*' className='hidden'
+                  onChange={(e)=>(handleInsertImage(e))} />
                   <Plus size={50} className=' font-extralight text-sm'/>
                   <p>Add Image</p>
               </label>
@@ -249,7 +269,7 @@ const CreateItems = () => {
             </div>
           </div>
         </div>
-          {isPreviewCard && <PreviewImage image={images[selectedImageIndex].image} setIsOpen={setIsPreviewCard}/>}  
+          {isPreviewCard && <PreviewImage image={images[selectedImageIndex].image_url} setIsOpen={setIsPreviewCard}/>}  
     </div>
   )
 }
