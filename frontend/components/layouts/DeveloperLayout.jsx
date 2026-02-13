@@ -32,7 +32,7 @@ const DeveloperLayout = () => {
               <p className={`${selectedMethod === m.id ? 'bg-blue-300 hover:bg-blue-200' : 'text-blue-400 hover:bg-blue-100' } p-2 text-sm transition-all duration-200 ease-in-out`} key={m.id} onClick={()=>(setSelectedMethod(m.id), navigate(m.nav))}>{m.title}</p>
             ))}
           </div>
-          <div className='pl-17 w-full'><Outlet /></div>
+          <div className='pl-17 md:pl-27 w-full'><Outlet /></div>
         </div>
     </div>
   )
