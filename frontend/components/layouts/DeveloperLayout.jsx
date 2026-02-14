@@ -7,12 +7,12 @@ const DeveloperLayout = () => {
   const [selectedMethod, setSelectedMethod] = useState(0)
   const pages = [
     {"id": 0, "title": "Create" , "nav": '/developer' },
-    {"id": 1, "title": "Categories" , "nav": '/developer/categories' },
+    {"id": 1, "title": "Categories" , "nav": '/categories' },
   ]
 
   const methods = [
     {"id": 0, "title":"POST", "nav": '/developer' },
-    {"id": 1, "title":"EDIT", "nav": '/developer/items' }
+    {"id": 1, "title":"EDIT", "nav": '/developer/items/list' }
   ]
 
   const navigate = useNavigate()
@@ -29,7 +29,8 @@ const DeveloperLayout = () => {
         <div className='flex gap-1 h-full relative'>
           <div className='absolute top-0 w-16 md:w-26 py-4 flex flex-col gap-2 bg-gray-100 border-r h-screen border-blue-200'>
             {methods.map((m)=>(
-              <p className={`${selectedMethod === m.id ? 'bg-blue-300 hover:bg-blue-200' : 'text-blue-400 hover:bg-blue-100' } p-2 text-sm transition-all duration-200 ease-in-out`} key={m.id} onClick={()=>(setSelectedMethod(m.id), navigate(m.nav))}>{m.title}</p>
+              <p className={`${selectedMethod === m.id ? 'bg-blue-300 hover:bg-blue-200' : 'text-blue-400 hover:bg-blue-100' } p-2 text-sm transition-all duration-200 ease-in-out`} key={m.id} 
+              onClick={()=>(setSelectedMethod(m.id), navigate(m.nav))}>{m.title}</p>
             ))}
           </div>
          <div className='pl-17 md:pl-27 w-full'><Outlet /></div>

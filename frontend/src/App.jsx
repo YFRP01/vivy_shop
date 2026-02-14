@@ -26,9 +26,9 @@ const App = () => {
           </Route>
           <Route path='/developer' element={<DeveloperLayout />}>
             <Route index element={<CreateItems />} />
-            <Route path='/developer/items' element={<ListItems />} />
-            <Route path='/developer/item/:id' element={<EditItem />} />
-            <Route path='/developer/categories' element={<HandleCategories />} />
+            <Route path='/developer/items/list' element={<ListItems />} />
+            <Route path='/developer/items/edit' element={<EditItem />} />
+            <Route path='/developer/items/categories' element={<HandleCategories />} />
           </Route>
         </Routes>
         </div>

@@ -7,6 +7,7 @@ import { Delete, Trash, Trash2 } from 'lucide-react'
 const ListItems = () => {
 
   const [holdItems, setHoldItems] = useState([])
+  const [itemToDeleteId, setItemToDeleteId] = useState(null)
 
   const getItems = async()=>{
     try {
@@ -16,6 +17,22 @@ const ListItems = () => {
       console.log(`Unable to get the saved items ${error.message}`);
     }
   }
+
+  const deleteItem = async()=>{
+    try {
+      await axios.delete(`${API_URL}/items/${itemToDeleteId}`);
+      setHoldItems((prev)=>prev.filter(item => item.item_id !== itemToDeleteId))
+    } catch (error) {
+      console.log(`Unable to get the saved items ${error.message}`);
+    }
+  }
+
+  
+  useEffect(()=>{
+    deleteItem()
+      console.log(holdItems.length, itemToDeleteId);
+
+  },[itemToDeleteId])
   
   useEffect(()=>{
     getItems()
@@ -25,13 +42,13 @@ const ListItems = () => {
     <div className='w-full h-full'>
       <div className='w-full px-2 text-green-500'>Items ({holdItems.length})</div>
       <div className='h-full'>
-        {!holdItems? 
+        {holdItems.length === 0 || !holdItems? 
           (<div className='h-full text-gray-600 flex items-center justify-center'>No item found</div>):
           (<div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 p-1'>
             {holdItems?.map((item)=>(
                 <div key={item.item_id} className='flex gap-2 items-center justify-center p-a' >
                     <DevItemsCards item={item} />
-                    <Trash2 className='text-red-500 fill-red-500' />
+                    <Trash2 onClick={()=>(setItemToDeleteId(item.item_id), deleteItem())} className='text-red-500 fill-red-500 hover:text-red-800 hover:fill-red-800  trannsition-all duration-100 ease-in-out ' />
                 </div>
           ))}
           </div>)}
