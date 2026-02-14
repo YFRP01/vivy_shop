@@ -216,61 +216,35 @@ router.put('/order/:id', async (req, res) => {
     }
 });
 
-//remove order
-router.delete('/order/:id', async (req,res)=>{
+//delete item
+router.delete("/:item_id", async (req,res)=>{
+    const {item_id}= req.params
     try {
-        const { id } = req.params;
-        const update = await pool.query(`
-            DELETE FROM orders
-            WHERE item_id=$1;
-        `, [id]);
-        res.status(200).json(update.rows);
-        console.log("Updated");
-        
+        const checkExistance = await pool.query(`
+            SELECT item_id FROM items WHERE item_id=$1`,[item_id])
+        const deleteQuery = await pool.query(`
+        DELETE FROM items WHERE item_id=$1;`,[item_id])
+    
+    if(checkExistance.lenth === 0){
+        res.status(404).json(`The order doesn't exist`)
+        console.log(`The order doesn't exist`);
+    } else
+    res.status(200).json(deleteQuery.rows[0]
+    )
     } catch (error) {
-        res.status(500).json({error: 'Failed to like / unlike of item'})
+        res.send(500).json(`Unable to delete order: ${error.message}`)
     }
 })
 
 
 
-//main && category='all'
-const hold1 = `SELECT i.item_id, i.name, i.category, i.liked,
-            (SELECT th.image FROM thumbnails th WHERE th.item_id=i.item_id 
-            ORDER BY th.item_id LIMIT 1) AS thumbnail,
-            (SELECT json_build_object(
-                'info_id', inf.info_id,
-                'qty', inf.qty,
-                'cost', inf.cost,
-                'details', inf.details
-            ) FROM infos inf WHERE inf.item_id=i.item_id ORDER BY inf.info_id LIMIT 1 ) AS info,
-            LEFT JOIN orders o ON o.item_id=i.item_id
-            GROUP BY i.item_id`;
-
-// main && category !='all'
-const hold2 = `SELECT i.item_id, i.name, i.category, i.liked,
-            (SELECT th.image FROM thumbnails th WHERE th.item_id=i.item_id 
-            ORDER BY th.item_id LIMIT 1) AS thumbnail,
-            (SELECT json_build_object(
-                'info_id', inf.info_id,
-                'qty', inf.qty,
-                'cost', inf.cost,
-                'details', inf.details
-            ) FROM infos inf WHERE inf.item_id=i.item_id ORDER BY inf.info_id LIMIT 1 ) AS info,
-            FROM items i 
-            LEFT JOIN infos inf ON inf.item_id=i.item_id
-            WHERE i.category ILIKE '%audio%' `;
 
 
-// const updateThumbnails = (`UPDATE thumbnails
-//             SET image = COALESCE(main, image)
-//             WHERE item_id =category;`,
-//             [image, id]);
 
-// const updateInfos = (`UPDATE infos
-//             SET qty=COALESCE(main, qty), cost=COALESCE(category, cost), details=COALESCE($3, details)
-//             WHERE item_id =$4;`,
-//             [qty, cost, details, id]);
+
+
+
+
 
 
 

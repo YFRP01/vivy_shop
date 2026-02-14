@@ -112,7 +112,7 @@ router.delete("/:order_id", async (req,res)=>{
     res.status(200).json(deleteQuery.rows[0]
     )
     } catch (error) {
-        res.send(500).json(`Unable to edit order: ${error.message}`)
+        res.send(500).json(`Unable to delete order: ${error.message}`)
     }
 })
 
