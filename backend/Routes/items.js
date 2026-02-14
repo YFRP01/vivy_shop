@@ -56,6 +56,32 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/developer", async (req, res)=>{
+  try {
+    const {category} = req.query
+    const params = []
+    let hold = ''
+    hold = `
+        SELECT i.item_id, i.name, i.source, i.description, i.source, 
+        i.created_at::DATE AS date,
+        i.created_at::TIME AS time,
+        (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS image,
+        (SELECT cat.category_name FROM categories cat WHERE cat.category_id =  i.category_id) AS category
+        FROM items i `;
+        if(category !== 'all'){
+          hold+=` WHERE i.category_id IN (
+          SELECT category_id FROM categories WHERE category_name ILIKE $1
+          ) `;
+        params.push(`%${category}%`);
+        }
+        hold+=` ORDER BY i.created_at DESC`
+    const response = await pool.query(hold, params)
+    if(response.length === 0){ return res.status(404).json(`No math found`)}
+    res.status(200).json(response.rows)
+  } catch (error) {
+    res.status(500).json(`Unable to get developer items: ${error.message}`)
+  }
+})
 
 router.get('/:id', async (req, res) => {
 

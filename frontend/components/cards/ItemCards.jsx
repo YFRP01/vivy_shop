@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { exchangeRate } from '../src/assets/assets'
 import { Heart, HeartCrack, JapaneseYen, Tag } from 'lucide-react'
 import axios from 'axios'
-import { API_URL } from '../api'
 import { useNavigate } from 'react-router-dom'
-import { useNotifications } from '../components/context/NotificationsContext.jsx'
+import { useNotifications } from '../../components/context/NotificationsContext.jsx'
+import { exchangeRate } from '../../src/assets/assets.js'
+import { API_URL } from '../../api.js'
 
 const ItemCards = ({item}) => {
 

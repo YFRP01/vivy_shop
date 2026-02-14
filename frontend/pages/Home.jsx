@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import ItemCards from '../components/ItemCards';
 import { API_URL } from '../api.js';
 import { useSearchParams } from 'react-router-dom';
-import CategoryCard from '../components/CategoryCard.jsx';
+import CategoryCard from '../components/cards/CategoryCard.jsx';
+import ItemCards from '../components/cards/ItemCards.jsx';
 
 const Home = () => {
 

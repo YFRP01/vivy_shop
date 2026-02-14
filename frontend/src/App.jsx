@@ -10,6 +10,7 @@ import DeveloperLayout from "../components/layouts/developerLayout"
 import MainLayout from "../components/layouts/MainLayout"
 import Navbar from '../components/Navbar'
 import HandleCategories from "../pages/developerPages/HandleCategories"
+import EditItem from "../pages/developerPages/EditItem"
 const App = () => {
 
   return (
@@ -26,6 +27,7 @@ const App = () => {
           <Route path='/developer' element={<DeveloperLayout />}>
             <Route index element={<CreateItems />} />
             <Route path='/developer/items' element={<ListItems />} />
+            <Route path='/developer/item/:id' element={<EditItem />} />
             <Route path='/developer/categories' element={<HandleCategories />} />
           </Route>
         </Routes>
