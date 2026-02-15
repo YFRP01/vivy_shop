@@ -1,201 +1,355 @@
 import axios from 'axios'
-import React, { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { useEffect } from 'react'
-import { Circle, Heart, JapaneseYen, Minus, MoveLeft, MoveRight, Plus } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
-import PopUp from '../../components/PopUp'
-import { useNotifications } from '../../components/context/NotificationsContext'
+import { assets, sources } from '../../src/assets/assets'
+import { ArrowDownCircle, ArrowDownCircleIcon, ArrowUpCircle, ChevronDown, ChevronUp, Edit, Edit2, Images, Info, MinusCircle, MoveDownIcon, MoveUpIcon, Plus, PlusCircle, PlusSquare, X } from 'lucide-react'
+import PreviewImage from '../../components/PreviewImage'
+import { useParams } from 'react-router-dom'
 
 const EditItem = () => {
+
   const {id} = useParams()
+  const ref = useRef()
 
-    const {setLikedCount} = useNotifications()
-    const [item, setItem] = useState([])
-    const [thumbnails, setThumbnails] = useState([])
-    const [editLike,setEditLike] = useState(false)
-    const [infos, setInfos] = useState([])
-    const [order, setOrder] = useState(null)
-    const [selectedInfo, setSelectedInfo] = useState(null)
-    const [isPop, setIspop] = useState(false)
-    const [displayIndex, setDisplayIndex] = useState(0)
-    const [orderedQty, setOrderedQty] = useState(1)
-    const totalCost =selectedInfo? orderedQty*selectedInfo.cost : 0;
+  const beginIndex = 3
+  const [categories, setCategories] = useState([])
+  const [nameInput, setNameInput] = useState('')
+  const [descriptionInput, setDescriptionInput] = useState('')
+  const [categoryInput, setCategoryInput] = useState('')
+  const [sourceInput, setSourceInput] = useState('')
+  const [isViewCategory, setViewCategory] = useState(false)
+  const [isViewSource, setViewSource] = useState(false)
+  const [isPreviewCard, setIsPreviewCard] = useState(false)
+  const [categoryLCheck, setCategoryLCheck] = useState(false)
+  const [isRadioSelected, setIsRadioSelected] = useState(false)
+  const [viewAllInfos, setViewAllInfos] = useState(false)
+  const [displayNum, setDisplayNum] = useState(beginIndex)
+  const [viewCat, setViewCat] = useState(false)
+  const [catImages, setCatImages] = useState()
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null)
+  const [holdInfos, setHoldInfos] = useState([])
+  const [images, setImages] = useState([])
+  const [infoBackup, setInfoBackup] = useState([])
 
-    const getDetails = async()=>{
-        try {
-            const res = await axios.get(`${API_URL}/items/${id}`)
-            const hold = res.data
-            setItem(hold.item)
-            setThumbnails(hold.thumbnails)
-            setEditLike(hold.item.liked)
-            setInfos(hold.infos)
-            setOrder(hold.order)
-            setOrderedQty(hold.order?.order_qty || 1)
-            setSelectedInfo(hold.order.order_status? hold.infos.find((i)=>(i.info_id === hold.order.info_id)) : hold.infos[0])
-        } catch (error) {
-            console.log(`Error message: ${error.message}`)
-        }
-    }
-
-    const updateFunc = async () =>{
-        try {
-            await axios.put(`${API_URL}/orders/${order.order_id}`,{
-                info_id: selectedInfo.info_id,
-                order_qty: orderedQty
-            })
-            console.log(`Order successfully updated`);       
-        } catch (error) {
-            console.log(`Unable to edit the order: ${error.message}`);
-        }
-    }
-
-    const postFunc = async () =>{
-        try {
-            await axios.post(`${API_URL}/orders`,{
-                item_id: item.item_id,
-                info_id: selectedInfo.info_id,
-                order_qty: orderedQty
-            })
-            console.log(`Order successfully created`);
-            
-        } catch (error) {
-            console.log(`Unable to place the order: ${error.message}`);
-        }
-    }
-
-        const likeFunc = async()=>{
-        try {
-            const res = await axios.put(`${API_URL}/liked/${id}`,{
-                liked: editLike
-            });
-            setEditLike(res.data.liked)
-            if(isPop) setIspop(false)
-                
-            const globalLikedNotif = await axios.get(`${API_URL}/liked_notifications`)
-            setLikedCount(globalLikedNotif.data[0]?.count || 0)
-        } catch (error) {
-            console.log(error.message);            
-        }
-    }
-
-    const editCreate = async ()=>{
-        console.log(order.order_id)
-        if(order.order_status){ await updateFunc() }
-        else await postFunc()
-
-        await getDetails()
-    }   
-       
-    const compute = (operation)=>{
-        if(isPop) setIspop(false);
-        setOrderedQty((prev)=>{
-            if(operation === 'minus'){
-                return Math.max(1, prev - 1)
-            }
-            else if(operation === 'add'){
-                return prev+1
-            }
-            return prev
-        })
+  const getDetails = async()=>{
+    try {
+        const response = await axios.get(`${API_URL}/items/developer/${id}`)
+        const temp = response.data[0]
+        setHoldInfos(temp.infos)
+        setInfoBackup(temp.infos)
+        setImages(temp.thumbnails)
+        setNameInput(temp.name)
+        setDescriptionInput(temp.description)
+        setSourceInput(temp.source)
+        setCategoryInput(temp.category)
+        setCatImages(temp.category_image)
         
+    } catch (error) {
+        console.log(`${error.message}`);
     }
+  }
 
-    const changeThumbnail = (operation)=>{
-        setDisplayIndex((prev)=>{
-            if(operation === 'minus'){
-                return Math.max(0, prev-1)
-            } else if(operation === 'add'){
-                return Math.min(prev+1, thumbnails.length-1)
-            }
-            return prev
-        })        
-    }
   
-    const popUpMessage = `The value of the ordered quantity can't be less than 1, it has been reinitialised to 1`
-    
-    
-    const handleInput = (e)=>{
-        const value = parseInt(e.target.value, 10)
-        if(isNaN(value) || value < 1){
-            setOrderedQty(0)
-        } else setOrderedQty(value)
-    }
-      
-
-    useEffect(()=>{
-        getDetails();
-        if(orderedQty < 0 || isNaN(orderedQty) || !orderedQty){
-            setIspop(true)
-            setOrderedQty(1); 
+  const clearForm = ()=>{
+      setNameInput('')
+      setDescriptionInput('')
+      setCategoryInput('')
+      setSourceInput('')
+      setHoldInfos([{qty: "", cost: "", details: ""}])
+      setImages([])
+      setCatImages({})
+      setCategoryLCheck(false)
+  }
+  const handleShow = (e, value, input)=>{
+        if(e.key === 'Enter' && input.trim()){
+            console.log(value, ':', input);
         }
-    }, [id])
+  }
+
+  const handleChange = (e, field, index)=>{
+    const update = [...holdInfos];
+    update[index][field] = e;
+    setHoldInfos(update)
+  }
+
+  const addNewBlock = ()=>{
+    const newd = [...holdInfos, {qty: "", cost: "", details: ""}];
+    setHoldInfos(newd);
+    console.log(newd);
     
+  }
+
+  const handleInsertImage = (e)=>{
+    const files = e.target.files;
+    const update = []
+    if(!files) return
+    for(let i=0; i < files.length; i++){
+        update.push({file: files[i], image_url: URL.createObjectURL(files[i])})
+    } 
+    setImages((prev)=>[...prev, ...update])
+    e.target.value=""
+  }
+
+  const handleInsertCategoryImage = (e)=>{
+    const file = e.target.files[0]
+    const update = {file, image_url: URL.createObjectURL(file)}
+    if(!file) return;
+    setCatImages(update)
+    console.log(`true, ${catImages}`);
+    e.target.value=""
+    
+
+  }
+  const handleDeleteImage = (index) =>{
+    setImages((prev)=>prev.filter((_, i)=> i !== index))
+  }
+
+  const handleEditImage = (e, index)=>{
+    const file= e.target.files[0]
+    if(!file) return;
+    const update = {image_url: URL.createObjectURL(file), file}
+    setImages((prev)=>prev.map((img, i)=>( i=== index ? update : img)))
+  }
+
+  const handleRadio = (e, input, type)=>{
+    if(type.includes('cat')){
+        setTimeout(() => {
+          setCategoryInput(input)
+          setViewCategory(false)
+          setCategoryLCheck(false)
+          setIsRadioSelected(true)
+        }, 300);
+    }
+    else if(type.includes('source')) {
+        setTimeout(() => {
+          setSourceInput(input)
+          setViewSource(false)
+        }, 300);
+    }
+    else {
+      console.log('error');
+      return null
+    }
+  }
+
+  const handleInfoMore = () =>{
+        if(displayNum === beginIndex) setDisplayNum(holdInfos.length); 
+        else setDisplayNum(beginIndex);      
+  }
+
+  const allCategories = async () =>{
+    try {
+      const response = await axios.get(`${API_URL}/categories`)
+      setCategories(response.data)
+    } catch (error) {
+      console.log(`Unable to get all categories: ${error.message}`);
+    }
+  }
+
+  useEffect(()=>{
+    getDetails()
+  }, [id])
+  
+  useEffect(()=>{
+    allCategories()
+  }, [])
+
+  useEffect(()=>{
+    const handle = (event) => {
+        if(ref.current && !ref.current.contains(event.target)){
+            setViewCategory(false)
+            setViewSource(false)
+        }
+    }
+
+    document.addEventListener('mousedown',handle)
+    return (()=>{
+        document.removeEventListener('mousedown', handle)
+    })
+    }, [])
+    console.log(holdInfos);
+    
+
   return (
-    <div className='flex flex-col items-center relative gap-2 h-screen px-5 md:px-10 lg:px-15'>
-        <div className='relative w-full'>
-            <PopUp message={popUpMessage} isPop={isPop}/>
+    <div className='flex flex-col h-full w-full p-1'>
+
+      {/*-----------------------------------------
+        items
+      -----------------------------------------*/}
+        <div className='flex flex-col gap-2'>
+          <div className=''>
+            <div className='w-full flex justify-between items-center'>
+              <p className='text-blue-500'>Item</p>
+              <div className='w-full font-medium text-sm text-white flex justify-end items-center gap-3 px-2 py-1'>
+                <button onClick={()=>(setHoldInfos([]), setHoldInfos(infoBackup))} className='bg-orange-400 border-none w-20 h-7 md:w-25 md:h-8 rounded-md cursor-pointer'>Reset</button>
+                <button onClick={()=>(clearForm())} className='bg-green-500 border-none w-20 h-7 md:w-25 md:h-8 p-1 rounded-md cursor-pointer'>Submit</button>
+              </div>
+
+            </div>
+            {/* name */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Name <span className='text-red-500'>*</span></h2>
+            <input 
+            type='text' value={nameInput} placeholder='Enter the item name ...' onChange={((e)=>(setNameInput(e.target.value)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            required/>
+          </div>
+          {/* description */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Description</h2>
+            <textarea 
+            onKeyDown={(e)=>(handleShow(e, 'Description', descriptionInput))} value={descriptionInput} placeholder='Enter the item name ...' onChange={((e)=>(setDescriptionInput(e.target.value)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            />
+          </div>
+          {/* category */}
+          <div className='flex  gap-2 w-full p-1 relative'>
+            <p className='flex gap-1 font-medium'>Category <span className='text-red-500'>*</span></p>
+            <div className='flex flex-col lg:flex-row lg:items-center gap-1 w-full'>
+              <div className='lg:flex-1 flex items-center justify-center gap-2'>
+                <label className='w-full flex items-center '>
+                <textarea placeholder='select' onChange={((e)=>(setCategoryInput(e.target.value)))} value={categoryInput} onClick={()=>(setViewCategory(!isViewCategory))} 
+                className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
+                </label>
+              <div className={`flex items-center justify-center lg:hidden w-8 `}>{viewCat ? (<ArrowDownCircle onClick={()=>(setViewCat(!viewCat))} size={25} className='text-blue-500 transition-all duration-150 ease-in'/>): (<ArrowUpCircle onClick={()=>(setViewCat(!viewCat))} size={25} className='text-green-500 transition-all duration-150 ease-in'/>)}</div>
+            </div>
+                <div className={`lg:flex-1 h-full items-center lg:flex justify-center flex-nowrap ${viewCat ? 'max-lg:flex': 'max-lg:hidden'} transition-all duration-400 ease-in-out gap-2`}>
+                    <label className='w-full flex items-center'>
+                      <textarea type='text' 
+                      className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
+                      placeholder='Custom name ...' value={categoryInput} onChange={(e)=>(setCategoryLCheck(true), setIsRadioSelected(false), setCategoryInput(e.target.value))}/>
+                    </label>
+                      <label className='flex items-center justify-center w-8 '>
+                      {catImages? (<PlusSquare size={20} className={`${categoryLCheck && !isRadioSelected ? 'text-green-500':'text-orange-500'}`}/>):(<MinusCircle size={20} className={`${categoryLCheck? 'text-orange-500':'text-gray-500'}`}/>)}
+                      <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
+                    </label>
+                </div>
+            </div>
+            {isViewCategory && (
+                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-53'>
+                  <div className='bg-ed-500 h-full w-full flex justify-center relative'>
+                   <div ref={ref} className='absolute top-63 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                        {categories.map((cat, index)=>(
+                        <label key={cat.category_id} onClick={(e)=>(handleRadio(e, cat.category_name, 'cat'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
+                            <input
+                            type='radio' onChange={(e)=>(setCategoryInput(e.target.value))} value={cat.category_name} name='category' required={index === 0}/>
+                            {cat.category_name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+            )} 
+          </div>
+            {/* source */}
+          <div className='flex gap-2 p-1 relative'>
+            <div className='flex gap-2'>
+              <p className='font-medium'>Source</p>
+              <button onClick={()=>(setViewSource(!isViewSource))} className='border border-gray-500 min-w-30 cursor-pointer text-gray-500 px-1 rounded-sm'>
+                {sourceInput? sourceInput:'select'}
+              </button>
+            </div>
+            {isViewSource && (
+                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/10 transition-all duration-500 ease-in-out w-full h-screen z-100'>
+                  <div className='bg-ed-500 h-full w-full flex justify-center relative'>
+                   <div ref={ref} className='absolute top-71 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                        {sources?.map((s)=>(
+                        <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
+                            <input
+                            type='radio' onChange={(e)=>(setSourceInput(e.target.value))} value={s.name} name='source' />
+                            {s.name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+            )} 
+          </div>
+          
+          </div>
         </div>
 
-        {/* thumbnail display */}
-        <div className='w-full bg-white flex items-center relative'>
-            <div className='w-full h-50 bg-gray-400 flex items-center justify-center relative'>
-                <img src={thumbnails.length>0?thumbnails[displayIndex].image:null} alt={`${item.name}`} className='object cover w-full h-full flex text-gray-700 justify-center items-center'/>
-            </div>
-            <div className='w-full flex justify-between h-8 px-2 absolute left-0 right-0'>
-                <div className='relative flex items-center w-full h-full'>
-                    {displayIndex > 0 && (<div onClick={()=>(changeThumbnail('minus'))} className='absolute left-0 transition-colors duration-500 ease-in-out bg-black/70 text-white p-1'><MoveLeft className='w-5 h-full'/></div>)}
-                    {displayIndex < thumbnails.length-1 && (<div  onClick={()=>(changeThumbnail('add'))} className='absolute  right-0 transition-colors duration-500 ease-in-out bg-black/70 text-white p-1'><MoveRight className='w-5 h-full'/></div>)}
-                </div>
-            </div>
-            <div className='w-full absolute bottom-2 flex items-center justify-center gap-2'>
-                {thumbnails.map((i)=>(
-                    <div key={i.image_id}>
-                        <Circle className={`w-2 h-2 transition-all duration-500 ease-in ${thumbnails.length>0 && i.image_id === thumbnails[displayIndex].image_id && 'fill-green-500 text-green-900'}`}/>
-                    </div>
-                ))}
-            </div>
+      {/*-----------------------------------------
+        infos
+      -----------------------------------------*/}
+      <div>
+      <div className='flex flex-col'>
+          <p className='text-blue-500'>Infos ({holdInfos.length})</p>
+          {holdInfos?.slice(0,displayNum).map((i, index)=>(
+            <div key={index} className={`border-t border-blue-200 transition-all duration-700 ease-in-out`}>
+          {/* Qty */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
+            <input 
+            type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e.target.value, 'qty', index)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            required/>
+          </div>
+          {/* cost */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
+            <input 
+            type='number' value={i.cost} min={0} placeholder='Cost' onChange={((e)=>(handleChange(e.target.value, 'cost', index)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            required/>
+          </div>
+          {/* details */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Details</h2>
+            <textarea
+            type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleChange(e.target.value, 'details', index)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            />
+          </div>
+          <div className={`w-full ${i.qty && i.cost && i.details && holdInfos.length - 1 === index ? 'block': 'hidden'} transitiion-all duration-800 ease-in flex justify-end items-center bg-red-5000`}>
+            <PlusCircle onClick={()=>(addNewBlock())} className='text-blue-500 transitiion-all duration-900 ease-in' />
+          </div>
+          </div>
+          ))}
         </div>
-        <div className='flex flex-col justify-center relative w-full p-2 pr-20 bg-blue-200'>
-            <p className='flex break-all gap-1 flex-wrap break-word'><span>Name:</span><span className='flex-1'> {item.name}</span></p>
-            <p className='flex gap-1 flex-wrap break-word'><span className=''>Category:</span><span className='flex-1'> {item.category}</span></p>            
-            <p className='flex gap-1 flex-wrap break-word'><span className=''>Description:</span><span className='flex-1'> {item.description}</span></p>            
-            <button className='absolute right-2 '>
-                    {editLike ?(<Heart onClick={()=>(likeFunc())} className='w-15 h-15 text-red-500 fill-red-500 transition-colors duration-100 ease-in-out'/>):((<Heart onClick={()=>(likeFunc())} className='w-15 h-15 fill-gray-500 text-gray-500 transition-colors duration-100 ease-in-out' />))}
+        {holdInfos.length>0 && <div className='flex items-center justify-center text-blue-500'>
+            <button onClick={()=>(handleInfoMore())} className='flex gap-1 items-center justify-center p-2 bg-blue-500 text-white rounded-lg outline'>
+                {displayNum !== beginIndex ? 
+                (<span className='flex gap-1 items-center justify-center'>Less <ChevronUp /></span>)
+                : 
+                (<span className='flex gap-1 items-center justify-center'>More <ChevronDown /></span>)}
             </button>
-        </div>
-        <div className='w-full p-1 bg-linear-to-b from-green-100 to-green-50 gap-2 flex flex-col items-center'>
-            <div className='w-full flex justify-between flex-col gap-2 px-2'>
-                <div className='w-full flex justify-end gap-1'>
-                    <div className='relative flex items-center justify-center border bg-white border-gray-400 rounded-2xl min-w-25 p-1 text-center '>
-                        <span className='flex px-5'>{parseFloat(totalCost)}</span>
-                        <JapaneseYen className='w-4 h-4  text-gray-600 absolute right-1'/>
+        </div>}
+      </div>
+
+
+      {/*-----------------------------------------
+        thumbnails
+      -----------------------------------------*/}
+
+        <div className='w-full'>
+          <p className='text-blue-500'>Thumbnails ({images.length}) <span className='text-red-500'>*</span></p>
+          <div className='flex border border-gray-200 p-1 gap-3 w-full m-1 h-60 overflow-x-auto'>
+            <div className='flex gap-2 p-1'>
+                {images?.map((i, index)=>(
+                <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
+                    <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} src={i?.image_url} alt='preview' className='w-full h-full object-cover border border-gray-200'/>
+                    <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
+                      <X onClick={()=>(handleDeleteImage(index))} size='25' className='text-red-500'/>
+                      <label>
+                        <Edit2 size='20' className='text-green-500'/>
+                      <input onChange={(e)=>(handleEditImage(e, index))} multiple type='file' accept='image/*' className='bg-red-500 hidden w-5' />
+                      </label>
                     </div>
-                    <div className='flex items-center justify-center rounded-2xl gap-1 w-25 border bg-white border-gray-600 p-1'>
-                        <Minus onClick={()=>(compute('minus'))} className='flex-2 w-full h-full bg-gray-400 rounded-l-2xl'/>
-                        <input
-                        type='number'
-                        min='1'
-                        value={orderedQty}
-                        onChange={handleInput} 
-                        className='flex-3 bg-gray-400 h-full w-full text-center'/>
-                        <Plus onClick={()=>(compute('add'))} className='flex-2 w-full h-full bg-gray-400 rounded-r-2xl'/>
-                    </div>
-                </div>
-                <button className='py-1 px-5 cursor-pointer bg-red-500 text-white flex items-center justify-center rounded-2xl border border-gray-500' onClick={()=>(editCreate())}>
-                    {order?.order_status? 'EDIT': 'POST'}
-                </button>
-            </div>
-            <div className='flex flex-wrap gap-2 p-1 px-2'>
-                {infos.map((i)=>(
-                    <p key={i.info_id} onClick={()=>(setSelectedInfo(i),isPop && setIspop(false))} className={`w-full border cursor-pointer ${i.info_id === selectedInfo?.info_id  ? 'border-2 border-green-500':'border-gray-500'} text-[12px] rounded-2xl space-x-1 bg-red-100 p-2`}>
-                        <span className='font-medium '>{i.qty}</span> 
-                        <span className=''>{i.details} a</span> 
-                        <span className='font-medium '>{i.cost}</span>
-                    </p>
+                 </div>
                 ))}
+                <label
+              className='flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-blue-100'>
+                  <input type='file' multiple accept='image/*' className='hidden'
+                  onChange={(e)=>(handleInsertImage(e))} />
+                  <Plus size={50} className=' font-extralight text-sm'/>
+                  <p>Add Image</p>
+              </label>
+              
             </div>
+          </div>
         </div>
+          {isPreviewCard && images[selectedImageIndex] && <PreviewImage image={images[selectedImageIndex].image_url} setIsOpen={setIsPreviewCard}/>}  
     </div>
   )
 }

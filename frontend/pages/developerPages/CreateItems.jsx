@@ -248,7 +248,7 @@ const CreateItems = () => {
       -----------------------------------------*/}
       <div>
       <div className='flex flex-col'>
-          <p className='text-blue-500'>Infos</p>
+          <p className='text-blue-500'>Infos ({holdInfos.length-1})</p>
           {holdInfos.map((i, index)=>(
             <div key={index} className={`border-t border-blue-200 transition-all duration-700 ease-in`}>
           {/* Qty */}
@@ -289,13 +289,13 @@ const CreateItems = () => {
       -----------------------------------------*/}
 
         <div className='w-full'>
-          <p className='text-blue-500'>Thumbnails <span className='text-red-500'>*</span></p>
+          <p className='text-blue-500'>Thumbnails ({images.length}) <span className='text-red-500'>*</span></p>
           <div className='flex border border-gray-200 p-1 gap-3 w-full m-1 h-60 overflow-x-auto'>
             <div className='flex gap-2 p-1'>
                 {images?.map((i, index)=>(
                 <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
                     <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} src={i.image_url} alt='preview' className='w-full h-full object-cover border border-gray-200'/>
-                    <div className='absolute top-0 left-0 flex justify-end gap-4 p-2 items-center right-0 w-full h-5'>
+                    <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
                       <X onClick={()=>(handleDeleteImage(index))} size='25' className='text-red-500'/>
                       <label>
                         <Edit2 size='20' className='text-green-500'/>

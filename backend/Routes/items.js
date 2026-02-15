@@ -237,6 +237,70 @@ router.delete("/:item_id", async (req,res)=>{
 })
 
 
+// ------------------------------------------
+// get developer ItemCards
+// ------------------------------------------
+
+router.get("/developer", async (req, res)=>{
+  try {
+    const {category} = req.query
+    const params = []
+    let hold = ''
+    hold = `
+        SELECT i.item_id, i.name, i.source, i.description, i.source, 
+        i.created_at::DATE AS date,
+        i.created_at::TIME AS time,
+        (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS image,
+        (SELECT cat.category_name FROM categories cat WHERE cat.category_id =  i.category_id) AS category
+        FROM items i `;
+        if(category !== 'all'){
+          hold+=` WHERE i.category_id IN (
+          SELECT category_id FROM categories WHERE category_name ILIKE $1
+          ) `;
+        params.push(`%${category}%`);
+        }
+        hold+=` ORDER BY i.created_at DESC`
+    const response = await pool.query(hold, params)
+    if(response.length === 0){ return res.status(404).json(`No math found`)}
+    res.status(200).json(response.rows)
+  } catch (error) {
+    res.status(500).json(`Unable to get developer items: ${error.message}`)
+  }
+})
+
+
+//get with id
+router.get("/developer/:item_id", async(req, res)=>{
+    try {
+      const {item_id} = req.params
+      const response = await pool.query(`
+        SELECT i.item_id, i.name, i.description, i.source,
+        cat.category_name AS category, cat.image AS category_image,
+        (SELECT json_agg(
+          json_build_object(
+              'qty', inf.qty,
+              'cost', inf.cost,
+              'details', inf.details
+            )
+          )) AS infos,
+        (SELECT json_agg(
+          json_build_object(
+              'file', th.image,
+              'cost', th.image
+            )
+          )) AS thumbnails
+        FROM items i 
+        JOIN categories cat ON cat.category_id = i.category_id
+        JOIN infos inf ON inf.item_id = i.item_id
+        JOIN thumbnails th ON th.item_id = i.item_id
+        WHERE i.item_id = $1
+        GROUP BY i.item_id, cat.category_id`,[item_id])
+
+        res.status(200).json(response.rows)
+    } catch (error) {
+      res.status(500).json(`Unable to get item details: ${error.message}`)
+    }
+})
 
 
 
