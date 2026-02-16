@@ -1,7 +1,7 @@
 import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
-import { assets, sources } from '../../src/assets/assets'
+import { sources } from '../../src/assets/assets'
 import { ArrowDownCircle, ArrowDownCircleIcon, ArrowUpCircle, CircleAlert, Edit, Edit2, Images, Info, MinusCircle, Plus, PlusCircle, PlusCircleIcon, PlusSquare, X } from 'lucide-react'
 import PreviewImage from '../../components/PreviewImage'
 
@@ -11,28 +11,12 @@ const CreateItems = () => {
   const ref = useRef()
 
   const [categories, setCategories] = useState([])
-  const [nameInput, setNameInput] = useState('')
-  const [descriptionInput, setDescriptionInput] = useState('')
-  const [categoryInput, setCategoryInput] = useState('')
-  const [sourceInput, setSourceInput] = useState('')
   const [isViewCategory, setViewCategory] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
   const [isPreviewCard, setIsPreviewCard] = useState(false)
-  const [categoryLCheck, setCategoryLCheck] = useState(false)
-  const [isRadioSelected, setIsRadioSelected] = useState(false)
   const [viewCat, setViewCat] = useState(false)
-  const [catImages, setCatImages] = useState()
-  const [holdCatImage, setHoldCatImage] = useState()
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
-  const [holdInfos, setHoldInfos] = useState([
-    {qty: "", cost: "", details: ""}
-  ])
-  const [images, setImages] = useState([
-    {"file": "image_01", "image_url": assets.image_two},
-    {"file": "image_02", "image_url": assets.react_image}
-
-  ])
-    const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
       name: '',
       description: '',
       category: '',
@@ -53,6 +37,13 @@ const CreateItems = () => {
       thumbnails: [],
       categoryImage: {}
     })
+    setCategories([])
+    setViewCategory(false)
+    setViewSource(false)
+    setIsPreviewCard(false)
+    setViewCat(false)
+    setSelectedImageIndex(null)
+
   }
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
@@ -107,8 +98,6 @@ const CreateItems = () => {
         setTimeout(() => {
           setFormData((prev)=>({...prev, category: input}))
           setViewCategory(false)
-          setCategoryLCheck(false)
-          setIsRadioSelected(true)
         }, 300);
     }
     else if(type.includes('source')) {
@@ -173,7 +162,7 @@ const CreateItems = () => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Name <span className='text-red-500'>*</span></h2>
             <input 
-            type='text' onKeyDown={(e)=>(handleShow(e, 'Name', formData.name))} value={formData.name} placeholder='Enter the item name ...' onChange={((e)=>(setNameInput(e.target.value)))} 
+            type='text' onKeyDown={(e)=>(handleShow(e, 'Name', formData.name))} value={formData.name} placeholder='Enter the item name ...' onChange={((e)=>(setFormData((prev)=>({...prev, name: e.target.value}))))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
           </div>
@@ -303,7 +292,7 @@ const CreateItems = () => {
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
           </div>
-          <div className={`w-full ${i.qty && i.cost && i.details && holdInfos.length - 1 === index ? 'block': 'hidden'} transitiion-all duration-800 ease-in flex justify-end items-center bg-red-5000`}>
+          <div className={`w-full ${i.qty && i.cost && i.details && formData?.infos?.length - 1 === index ? 'block': 'hidden'} transitiion-all duration-800 ease-in flex justify-end items-center bg-red-5000`}>
             <PlusCircle onClick={()=>(addNewBlock())} className='text-blue-500 transitiion-all duration-900 ease-in' />
           </div>
           </div>
@@ -349,7 +338,7 @@ const CreateItems = () => {
             </div>)}
           </div>
         </div>
-        {isPreviewCard && images[selectedImageIndex] && <PreviewImage image={images[selectedImageIndex].image_url} setIsOpen={setIsPreviewCard}/>}  
+        {isPreviewCard && formData?.thumbnails[selectedImageIndex] && <PreviewImage image={formData?.thumbnails[selectedImageIndex].image_url} setIsOpen={setIsPreviewCard}/>}  
     </div>
   )
 }

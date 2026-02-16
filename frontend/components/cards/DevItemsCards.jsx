@@ -1,12 +1,10 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
 
 const DevItemsCards = ({item}) => {
 
-  const navigate = useNavigate()
 
   return (
-            <div onClick={()=>(navigate(`/developer/items/edit/${item.item_id}`))} className={`flex items-center border-gray-500 p-1 shadow-md bg-gray-50 rounded-md gap-2 w-full`}>
+            <div className={`flex items-center border-gray-500 p-1 shadow-md bg-gray-50 rounded-md gap-2 w-full`}>
                 <div className='flex-1 text-sm md:text-md gap-1 flex-wrap  break-word'>
                     <div className='flex flex-col break-word'>
                         <div className='flex w-full'>

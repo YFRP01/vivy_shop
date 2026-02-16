@@ -1,22 +1,21 @@
 import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
-import { API_URL } from '../../api'
-import { sources } from '../../src/assets/assets'
+import { API_URL } from '../api'
+import { sources } from '../src/assets/assets'
 import { ChevronDown, ChevronUp, CircleAlert, Edit, Edit2, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X } from 'lucide-react'
-import PreviewImage from '../../components/PreviewImage'
-import { useParams } from 'react-router-dom'
+import PreviewImage from './PreviewImage'
 
-const EditItem = () => {
+const EditItem = ({setViewDetailsModal, itemId}) => {
 
-  const {id} = useParams()
   const ref = useRef()
 
-  const beginIndex = 1
+
+  const startIndex = 1
   const [categories, setCategories] = useState([])
   const [isViewCategory, setViewCategory] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
   const [isPreviewCard, setIsPreviewCard] = useState(false)
-  const [displayNum, setDisplayNum] = useState(beginIndex)
+  const [displayNum, setDisplayNum] = useState(startIndex)
   const [viewCat, setViewCat] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [backUpData, setBackupData] = useState(null)
@@ -33,7 +32,7 @@ const EditItem = () => {
 
   const getDetails = async()=>{
     try {
-        const response = await axios.get(`${API_URL}/items/developer/${id}`)
+        const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
         const temp = response.data[0]
         const newData = {
           name: temp.name,
@@ -55,6 +54,14 @@ const EditItem = () => {
       if(backUpData){
         setFormData(backUpData)
       }
+    setCategories([])
+    setViewCategory(false)
+    setViewSource(false)
+    setIsPreviewCard(false)
+    setViewCat(false)
+    setSelectedImageIndex(null)
+    setDisplayNum(startIndex)
+
   }
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
@@ -131,8 +138,8 @@ const EditItem = () => {
   }
 
   const handleInfoMore = () =>{
-        if(displayNum === beginIndex) setDisplayNum(formData.infos.length); 
-        else setDisplayNum(beginIndex);      
+        if(displayNum === startIndex) setDisplayNum(formData.infos.length); 
+        else setDisplayNum(startIndex);      
   }
 
   const allCategories = async () =>{
@@ -290,7 +297,7 @@ const EditItem = () => {
       -----------------------------------------*/}
       <div>
       <div className='flex flex-col'>
-          <p className='text-blue-500'>Infos ({formData?.infos.length})</p>
+          <p className='text-blue-500'>Infos (<span className='text-green-500'>{formData?.infos.length}</span>)</p>
           {formData?.infos.slice(0,displayNum).map((i, index)=>(
             <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
               <div className='flex justify-between px-2 p-1 text-sm'>
@@ -331,9 +338,9 @@ const EditItem = () => {
                 Add More Infos
             </button>
           {formData.infos.length>0 && <div className='flex items-center justify-center text-blue-500'>
-          {formData.infos.length > beginIndex &&
+          {formData.infos.length > startIndex &&
             <button onClick={()=>(handleInfoMore())} className='flex gap-1 items-center justify-center p-2 bg-blue-500 text-white rounded-lg outline'>
-                {displayNum !== beginIndex ? 
+                {displayNum !== startIndex ? 
                 (<span className='flex gap-1 items-center justify-center'>Less <ChevronUp /></span>)
                 : 
                 (<span className='flex gap-1 items-center justify-center'>More <ChevronDown /></span>)}
@@ -350,7 +357,7 @@ const EditItem = () => {
 
       <div className='w-full'>
           <div className='flex items-center justify-between '>
-            <p className='text-blue-500'>Thumbnails ({formData?.thumbnails.length}) <span className='text-red-500'>*</span></p>
+            <p className='text-blue-500'>Thumbnails (<span className='text-green-500'>{formData?.thumbnails.length})</span> <span className='text-red-500'>*</span></p>
             <label
               className='flex flex-col items-center justify-center rounded-md text-green-500'>
                   <input type='file' multiple accept='image/*' className='hidden'

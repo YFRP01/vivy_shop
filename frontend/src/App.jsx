@@ -10,7 +10,7 @@ import DeveloperLayout from "../components/layouts/developerLayout"
 import MainLayout from "../components/layouts/MainLayout"
 import Navbar from '../components/Navbar'
 import HandleCategories from "../pages/developerPages/HandleCategories"
-import EditItem from "../pages/developerPages/EditItem"
+// import EditItem from "../pages/developerPages/EditItem"
 const App = () => {
 
   return (
@@ -29,7 +29,7 @@ const App = () => {
             <Route path='/developer/items/list' element={<ListItems />} />
             <Route path='/developer/categories' element={<HandleCategories />} />
           </Route>
-          <Route path='/developer/items/edit/:id' element={<EditItem />} />
+          {/* <Route path='/developer/items/edit/:id' element={<EditItem />} /> */}
         </Routes>
         </div>
       </div>
