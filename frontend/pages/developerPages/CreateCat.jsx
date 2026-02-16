@@ -1,9 +1,10 @@
 import { CircleAlert, Edit2, Pointer, X } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import PreviewImage from '../../components/PreviewImage'
 
 const CreateCat = () => {
 
+    const editImageRef = useRef()
     const [viewImageModal, setViewImageModal] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
@@ -25,7 +26,7 @@ const CreateCat = () => {
     }
     
 
-  return (
+    return (
     <div>
         <div className='w-full flex justify-between items-center'>
             <p className='text-blue-500'>Item</p>
@@ -36,36 +37,34 @@ const CreateCat = () => {
         </div>
 
         <div className='flex gap-2 p-1'>
-            <h2 className='font-medium'>Name <span className='text-red-500'>*</span></h2>
+            <h2 className='flex font-medium'>Name <span className='text-red-500'>*</span></h2>
+            <div className='space-y-5  w-full flex flex-col justify-center items-center'>
             <input 
             type='text' value={formData?.name} placeholder='Enter the item name ...' onChange={((e)=>(setFormData((prev)=>({...prev, name: e.target.value}))))} 
-            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            className={`focus:ring-2 flex-1 border w-full border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
-        </div>
 
-        <div className='flex border border-gray-200 p-1 gap-3 w-full m-1 h-60 overflow-x-auto'>
-            {formData?.image?.length > 0 ? (
-              <div className='flex gap-2 p-1 w-full'>
-                {formData?.image && (
-                <div onClick={()=>(setViewImageModal(true))} className='relative w-full bg-red-500 flex items-center justify-center gap-1 text-gray-400 flex-col rounded-md border border-gray-400'>
-                    <img src={formData?.image.image_url} alt='preview' 
-                    className='w-full h-full object-cover border border-gray-200'/>
-                    <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
-                      <label>
+        <div className='flex border border-gray-200 w-100 h-100 gap-3 justify-center  overflow-x-auto'>
+                {formData?.image?.image_url ? (
+                <div className='relative flex  h-full items-center justify-center gap-1 text-gray-400 flex-col rounded-md border border-gray-400'>
+                    <img onClick={()=>(setViewImageModal(true))} src={formData?.image.image_url} alt='preview' 
+                    className=' object-cover border border-gray-200'/>
+                    <div className='absolute top-1 left-0 flex justify-end gap-2 items-center right-0 w-full h-5 p-2'>
+                      <label ref={editImageRef} className='w-fit flex p-1 items-center justify-end'>
                         <Edit2 size='20' className='text-green-500'/>
                         <input onChange={(e)=>(handleInsertImage(e))} type='file' accept='image/*' className='bg-red-500 hidden w-5' />
                       </label>
                     </div>
                  </div>
-                )}
+                ):
+                (<label className='w-full flex items-center justify-center gap-1 text-gray-400'>
+                    <Pointer size={20} />
+                    <input onChange={(e)=>(handleInsertImage(e))} type='file' accept='image/*' className='bg-red-500 hidden w-5' />
+                    <p>Select Image</p>
+                </label>)}
             </div>
-            ):
-            (<label className='w-full flex items-center justify-center gap-1 text-gray-400'>
-                <Pointer size={20} />
-                <input onChange={(e)=>(handleInsertImage(e))} type='file' accept='image/*' className='bg-red-500 hidden w-5' />
-                <p>Select Image</p>
-            </label>)}
-          </div>
+            </div>
+        </div>
         {viewImageModal && (<PreviewImage image={formData.image} setIsOpen={setViewImageModal} />)}
     </div>
   )
