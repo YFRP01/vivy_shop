@@ -332,7 +332,7 @@ const CreateItems = () => {
                 ))}
             </div>
             ):
-            (<div className='w-full flex items-center justify-center gap-2 text-gray-400'>
+            (<div className='w-full flex items-center justify-center gap-1 text-gray-400'>
               <CircleAlert size={20} />
               <p>Empty</p>
             </div>)}

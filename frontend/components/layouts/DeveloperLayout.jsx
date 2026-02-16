@@ -1,4 +1,4 @@
-;import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { Outlet, useNavigate } from "react-router-dom"
 
 
@@ -27,7 +27,7 @@ const DeveloperLayout = () => {
             ))}  
         </div>    
         <div className='flex gap-1 h-full relative'>
-          <div className='absolute top-0 w-16 md:w-26 py-4 flex flex-col gap-2 bg-gray-100 border-r h-screen border-blue-200'>
+          <div className='absolute top-0 w-16 md:w-26 py-4 flex flex-col gap-2 bg-gray-100 border-r h-full border-blue-200'>
             {methods.map((m)=>(
               <p className={`${selectedMethod === m.id ? 'bg-blue-300 hover:bg-blue-200' : 'text-blue-400 hover:bg-blue-100' } p-2 text-sm transition-all duration-200 ease-in-out`} key={m.id} 
               onClick={()=>(setSelectedMethod(m.id), navigate(m.nav))}>{m.title}</p>

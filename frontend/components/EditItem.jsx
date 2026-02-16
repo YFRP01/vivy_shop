@@ -2,7 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../api'
 import { sources } from '../src/assets/assets'
-import { ChevronDown, ChevronUp, CircleAlert, Edit, Edit2, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, CircleAlert, Edit, Edit2, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X, XCircle } from 'lucide-react'
 import PreviewImage from './PreviewImage'
 
 const EditItem = ({setViewDetailsModal, itemId}) => {
@@ -30,6 +30,7 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
     categoryImage: {}
   })
 
+  
   const getDetails = async()=>{
     try {
         const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
@@ -153,7 +154,7 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
 
   useEffect(()=>{
     getDetails()
-  }, [id])
+  }, [itemId])
   
   useEffect(()=>{
     allCategories()
@@ -176,7 +177,7 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
     
 
   return (
-    <div className='flex flex-col h-full w-full px-2 md:px-30 lg:px-50 xl:px-70'>
+    <div className='flex flex-col h-full gap-2 w-full px-2 md:px-30 lg:px-30 xl:px-40'>
 
       {/*-----------------------------------------
         items
