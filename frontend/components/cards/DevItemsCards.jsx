@@ -6,7 +6,7 @@ const DevItemsCards = ({item}) => {
   const navigate = useNavigate()
 
   return (
-            <div onClick={()=>(navigate(`/developer/items/edit/${item.item_id}`))} className={`flex items-center border-gray-500 p-1 shadow-md bg-gray-100 rounded-md gap-2 w-full`}>
+            <div onClick={()=>(navigate(`/developer/items/edit/${item.item_id}`))} className={`flex items-center border-gray-500 p-1 shadow-md bg-gray-50 rounded-md gap-2 w-full`}>
                 <div className='flex-1 text-sm md:text-md gap-1 flex-wrap  break-word'>
                     <div className='flex flex-col break-word'>
                         <div className='flex w-full'>
@@ -16,7 +16,7 @@ const DevItemsCards = ({item}) => {
                                 <p className='text-xs'>Source: <span className='font-medium text-sm leading-5'>{item.source.slice(0, 100)}{item.source.length > 100 && '...'}</span></p>                    
                             </div>
                             <div className='border border-gray-500 w-20  rounded-md bg-red-500 overflow-hidden'>
-                                <img src={item.image} alt={item.name + 'image'} className='object-cover h-full rounded-md bg-white text-center flex text-[10px] text-gray-600'/>
+                                <img src={item.image} alt={item.name + 'image'} className='object-cover h-full rounded-md bg-white text-center border border-gray-50 flex text-[10px] text-gray-600'/>
                             </div>
                         </div>
                         <p className='text-xs'>Description: <span className='font-medium text-sm leading-5'>{item.description.slice(0, 207)}{item.description.length > 207 && '...'}</span></p> 

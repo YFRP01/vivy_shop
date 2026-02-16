@@ -22,6 +22,7 @@ const CreateItems = () => {
   const [isRadioSelected, setIsRadioSelected] = useState(false)
   const [viewCat, setViewCat] = useState(false)
   const [catImages, setCatImages] = useState()
+  const [holdCatImage, setHoldCatImage] = useState()
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [holdInfos, setHoldInfos] = useState([
     {qty: "", cost: "", details: ""}
@@ -178,26 +179,40 @@ const CreateItems = () => {
           </div>
           {/* category */}
           <div className='flex  gap-2 w-full p-1 relative'>
-            <p className='flex gap-1 font-medium'>Category <span className='text-red-500'>*</span></p>
-            <div className='flex flex-col lg:flex-row lg:items-center gap-1 w-full'>
-              <div className='lg:flex-1 flex items-center justify-center gap-2'>
-                <label className='w-full flex items-center '>
-                <textarea placeholder='select' value={categoryInput} onClick={()=>(setViewCategory(!isViewCategory))} 
-                className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
-                </label>
-              <div className={`flex items-center justify-center lg:hidden w-8 `}>{viewCat ? (<ArrowDownCircle onClick={()=>(setViewCat(!viewCat))} size={25} className='text-blue-500 transition-all duration-150 ease-in'/>): (<ArrowUpCircle onClick={()=>(setViewCat(!viewCat))} size={25} className='text-green-500 transition-all duration-150 ease-in'/>)}</div>
+            <div className='flex flex-col h-fit gap-1 font-medium'>
+              <div className='flex gap-1 font-medium'>
+                  <p className=''>Category</p>
+                  <span className='text-red-500'>*</span>
+              </div>
+              <div className='flex text-[10px] items-center justify-between px-1'>
+                <label className='flex items-center gap-1'>
+                    <input type='checkbox' name='whichCat' onChange={(e)=>(setViewCat(e.target.checked))} checked={viewCat} className='cursor-pointer'/>
+                    Default
+                </label> 
+              </div>
             </div>
-                <div className={`lg:flex-1 h-full items-center lg:flex justify-center flex-nowrap ${viewCat ? 'max-lg:flex': 'max-lg:hidden'} transition-all duration-400 ease-in-out gap-2`}>
-                    <label className='w-full flex items-center'>
-                      <textarea type='text' 
-                      className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
-                      placeholder='Custom name ...' value={categoryInput} onChange={(e)=>(setCategoryLCheck(true), setIsRadioSelected(false), setCategoryInput(e.target.value))}/>
+                <div className='flex flex-col lg:flex-row lg:items-center gap-1 w-full'>
+              {!viewCat && (                  
+                  <div className='lg:flex-1 flex items-center justify-center gap-2'>
+                    <label className='w-full flex items-center '>
+                    <textarea placeholder='select' value={categoryInput} onClick={()=>(setViewCategory(!isViewCategory))} 
+                    className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
                     </label>
-                      <label className='flex items-center justify-center w-8 '>
-                      {catImages? (<PlusSquare size={20} className={`${categoryLCheck && !isRadioSelected ? 'text-green-500':'text-orange-500'}`}/>):(<MinusCircle size={20} className={`${categoryLCheck? 'text-orange-500':'text-gray-500'}`}/>)}
-                      <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
-                    </label>
-                </div>
+                  </div>
+              )}
+              {viewCat && (
+                  <div className={`lg:flex-1 flex gap-2 flex-col`}>
+                        <label className='w-full flex items-center'>
+                          <textarea type='text' 
+                          className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
+                          placeholder='Custom name ...' value={categoryInput} onChange={(e)=>(setCategoryLCheck(true), setIsRadioSelected(false), setCategoryInput(e.target.value))}/>
+                        </label>
+                        <label className='flex items-center justify-center w-full'>
+                            <img src={catImages?.image_url} alt='category preview' className='object-cover h-20 w-full rounded-md border border-gray-300'/>
+                            <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
+                        </label>
+                    </div>
+              )}
             </div>
             {isViewCategory && (
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-53'>

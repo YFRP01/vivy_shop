@@ -22,7 +22,6 @@ const EditItem = () => {
   const [isPreviewCard, setIsPreviewCard] = useState(false)
   const [categoryLCheck, setCategoryLCheck] = useState(false)
   const [isRadioSelected, setIsRadioSelected] = useState(false)
-  const [viewAllInfos, setViewAllInfos] = useState(false)
   const [displayNum, setDisplayNum] = useState(beginIndex)
   const [viewCat, setViewCat] = useState(false)
   const [catImages, setCatImages] = useState()
@@ -73,10 +72,7 @@ const EditItem = () => {
   }
 
   const addNewBlock = ()=>{
-    const newd = [...holdInfos, {qty: "", cost: "", details: ""}];
-    setHoldInfos(newd);
-    console.log(newd);
-    
+    setHoldInfos([...holdInfos, {qty: "", cost: "", details: ""}]); 
   }
 
   const handleInsertImage = (e)=>{
@@ -167,7 +163,6 @@ const EditItem = () => {
         document.removeEventListener('mousedown', handle)
     })
     }, [])
-    console.log(holdInfos);
     
 
   return (
@@ -345,7 +340,6 @@ const EditItem = () => {
                   <Plus size={50} className=' font-extralight text-sm'/>
                   <p>Add Image</p>
               </label>
-              
             </div>
           </div>
         </div>
