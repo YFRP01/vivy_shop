@@ -26,7 +26,6 @@ const CreateItems = () => {
       categoryImage: {}
     })
   
-
   const clearForm = ()=>{
     setFormData({
       name: '',
@@ -149,14 +148,12 @@ const CreateItems = () => {
         items
       -----------------------------------------*/}
         <div className='flex flex-col gap-2'>
-          <div className=''>
             <div className='w-full flex justify-between items-center'>
               <p className='text-blue-500'>Item</p>
               <div className='w-full font-medium text-sm text-white flex justify-end items-center gap-3 px-2 py-1'>
                 <button onClick={()=>(clearForm())} className='bg-red-500 border-none w-20 h-7 md:w-25 md:h-8 rounded-md cursor-pointer'>Clear</button>
                 <button onClick={()=>(clearForm())} className='bg-green-500 border-none w-20 h-7 md:w-25 md:h-8 p-1 rounded-md cursor-pointer'>Submit</button>
               </div>
-
             </div>
             {/* name */}
           <div className='flex gap-2 p-1'>
@@ -255,8 +252,6 @@ const CreateItems = () => {
                   </div>
                 </div>
             )} 
-          </div>
-          
           </div>
         </div>
 

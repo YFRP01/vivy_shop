@@ -1,6 +1,6 @@
 import React from 'react'
 
-const HandleCategories = () => {
+const ListCats = () => {
   return (
     <div>
       
@@ -8,4 +8,4 @@ const HandleCategories = () => {
   )
 }
 
-export default HandleCategories
+export default ListCats

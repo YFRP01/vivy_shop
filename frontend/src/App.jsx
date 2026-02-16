@@ -9,7 +9,8 @@ import ListItems from "../pages/developerPages/ListItems"
 import DeveloperLayout from "../components/layouts/developerLayout"
 import MainLayout from "../components/layouts/MainLayout"
 import Navbar from '../components/Navbar'
-import HandleCategories from "../pages/developerPages/HandleCategories"
+import CreateCat from "../pages/developerPages/CreateCat"
+import ListCats from "../pages/developerPages/ListCats"
 // import EditItem from "../pages/developerPages/EditItem"
 const App = () => {
 
@@ -27,9 +28,9 @@ const App = () => {
           <Route path='/developer' element={<DeveloperLayout />}>
             <Route index element={<CreateItems />} />
             <Route path='/developer/items/list' element={<ListItems />} />
-            <Route path='/developer/categories' element={<HandleCategories />} />
+            <Route path='/developer/categories/create' element={<CreateCat/>}/>
+            <Route path='/developer/categories/list' element={<ListCats/>}/>
           </Route>
-          {/* <Route path='/developer/items/edit/:id' element={<EditItem />} /> */}
         </Routes>
         </div>
       </div>
