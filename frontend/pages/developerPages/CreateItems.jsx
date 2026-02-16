@@ -78,7 +78,6 @@ const CreateItems = () => {
     const update = {file, image_url: URL.createObjectURL(file)}
     if(!file) return;
     setCatImages(update)
-    console.log(`true, ${catImages}`);
     e.target.value=""
     
 
@@ -208,7 +207,7 @@ const CreateItems = () => {
                           placeholder='Custom name ...' value={categoryInput} onChange={(e)=>(setCategoryLCheck(true), setIsRadioSelected(false), setCategoryInput(e.target.value))}/>
                         </label>
                         <label className='flex items-center justify-center w-full'>
-                            <img src={catImages?.image_url} alt='category preview' className='object-cover h-20 w-full rounded-md border border-gray-300'/>
+                            <img src={catImages?.image_url} alt={catImages ? 'category preview':'Select image'} className='object-cover h-20 w-full rounded-md border text-gray-500 text-sm border-gray-300'/>
                             <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
                         </label>
                     </div>
