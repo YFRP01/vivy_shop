@@ -66,9 +66,11 @@ const ListCats = () => {
                     <div className='flex-1 h-full p-2 flex flex-col justify-between'>
                         <div className=''>
                         <p className='font-medium'>{i.category_name}</p>
-                            <p className='text-sm text-black flex'>
-                                    <ul className='/*list-disc list-inside*/ w-full flex gap-1'>
-                                        <li><span className='text-green-500 font-black'>{i.item.length} </span>item{ i.item.length !== 1 ? 's' : '' }</li>connected
+                            <p className='text-sm flex'>
+                                    <ul className='list-disc list-inside text-blue-500 w-full flex gap-1'>
+                                        <li className='text-black flex gap-1'><span className='text-green-500 font-black'>{i.item.length} </span>
+                                            <span>item{ i.item.length !== 1 ? 's' : '' }connected</span>
+                                        </li>
                                     </ul>
                             </p>
                         </div>
