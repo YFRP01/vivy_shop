@@ -65,13 +65,11 @@ const ListCats = () => {
                 <div key={i.category_id} className='flex items-center shadow justify-center gap-2 border border-gray-200 rounded-md'>
                     <div className='flex-1 h-full p-2 flex flex-col justify-between'>
                         <div className=''>
-                        <p className='font-medium'>{i.category_name}</p>
-                            <p className='text-sm flex'>
-                                    <ul className='list-disc list-inside text-blue-500 w-full flex gap-1'>
-                                        <li className='text-black flex gap-1'><span className='text-green-500 font-black'>{i.item.length} </span>
-                                            <span>item{ i.item.length !== 1 ? 's' : '' }connected</span>
-                                        </li>
-                                    </ul>
+                            <p className='font-medium'>{i.category_name}</p>
+                            <p className='text-sm flex items-center w-full gap-1'>
+                                <div className='rounded-full w-fit h-fit p-1 bg-red-500'/>
+                                <span className='text-green-500 font-black'>{i.item.length}</span> 
+                                <span className='text-black font-normal'>item{ i.item.length !== 1 ? 's' : '' } connected</span>
                             </p>
                         </div>
                         <div className='flex flex-col'>
@@ -95,7 +93,7 @@ const ListCats = () => {
         </div>
         {checkStatus && (
             <div className='h-screen w-screen z-50 fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex items-center justify-center '>
-              <div ref={detailsRef} className='bg-white p-8 shadow-lg h-[80%] space-y-5 w-[90%] rounded-xl md:p-4 lg:p-6 relative'>
+              <div ref={detailsRef} className='bg-white shadow-lg h-[80%] space-y-5 w-[90%] rounded-xl p-2 md:p-4 lg:p-6 relative'>
                 <div className='w-full absolute top-0 right-0 p-2 text-red-500 flex items-center justify-end'>
                   <XCircle className='cursor-pointer w-7 h-7' onClick={()=>(setCheckStatus(false))} />
                 </div>
