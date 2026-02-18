@@ -20,9 +20,9 @@ const ViewCatModal = ({hold }) => {
     }, [])
 
   return (
-    <div className='flex flex-col h-full'>
+    <div className='flex flex-col h-full py-7'>
         <div className='w-full space-y-2 h-fit relative'>
-        <p className='text-blue-500 text-2xl list-disc list-inside'>{hold?.category_name}
+        <p className='text-blue-500 text-2xl'>{hold?.category_name}
             (<span className='text-green-500 font-medium'>{hold?.item?.length}</span>)
         </p>
         {hold?.item?.length > 0 ? (

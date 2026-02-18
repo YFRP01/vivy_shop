@@ -84,6 +84,107 @@ const Navbar = () => {
     }, [location.pathname])
         
   return (
+
+//     <nav className="sticky top-0 left-0 w-full z-50 bg-gradient-to-r from-green-700 via-emerald-600 to-blue-600 shadow-lg">
+
+//   {/* Top Row */}
+//   <div className="flex items-center justify-between px-5 py-3">
+
+//     {/* Left - Menu */}
+//     <button
+//       onClick={() => setIsMenuOpen(true)}
+//       className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition backdrop-blur-md"
+//     >
+//       <Menu className="w-5 h-5 text-white" />
+//     </button>
+
+//     {/* Center - Logo */}
+//     <div
+//       onClick={() => navigate('/')}
+//       className="cursor-pointer text-white font-extrabold tracking-wide text-xl"
+//     >
+//       SHOPLY
+//     </div>
+
+//     {/* Right - Favourites */}
+//     <button
+//       onClick={() => navigate('/favourites')}
+//       className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition backdrop-blur-md"
+//     >
+//       <Heart className="w-5 h-5 text-white" />
+//       {likedCount > 0 && (
+//         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow">
+//           {likedCount > 99 ? '99+' : likedCount}
+//         </span>
+//       )}
+//     </button>
+
+//   </div>
+
+//   {/* Search Row */}
+//   <div className="px-5 pb-4">
+//     <div className="relative">
+//       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+
+//       <input
+//         value={inputValue}
+//         onChange={(e) => setInputValue(e.target.value)}
+//         onKeyDown={handleSearch}
+//         placeholder={placeholderValue}
+//         className="w-full pl-11 pr-10 py-2.5 rounded-2xl bg-white text-sm shadow-inner focus:ring-2 focus:ring-emerald-400 outline-none transition"
+//       />
+
+//       {inputValue && (
+//         <button
+//           onClick={() => setInputValue('')}
+//           className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+//         >
+//           <X className="w-4 h-4" />
+//         </button>
+//       )}
+//     </div>
+//   </div>
+
+//   {/* Slide Menu Panel */}
+//   <div
+//     className={`fixed top-0 left-0 h-full w-72 bg-white shadow-2xl transform transition-transform duration-300 z-50
+//     ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+//   >
+//     {/* Panel Header */}
+//     <div className="flex justify-between items-center p-4 border-b">
+//       <span className="font-semibold text-gray-700">Categories</span>
+//       <button onClick={() => setIsMenuOpen(false)}>
+//         <X className="w-5 h-5 text-gray-500" />
+//       </button>
+//     </div>
+
+//     {/* Category List */}
+//     <div className="overflow-y-auto h-full pb-20">
+//       {categories.map((cat) => (
+//         <div
+//           key={cat.category_id}
+//           onClick={() => handleCategory(cat.category_name)}
+//           className={`px-5 py-3 text-sm cursor-pointer transition
+//             ${selectedCat === cat.category_name
+//               ? 'bg-emerald-100 text-emerald-700 font-medium'
+//               : 'text-gray-600 hover:bg-gray-100'}`}
+//         >
+//           {cat.category_name}
+//         </div>
+//       ))}
+//     </div>
+//   </div>
+
+//   {/* Overlay */}
+//   {isMenuOpen && (
+//     <div
+//       onClick={() => setIsMenuOpen(false)}
+//       className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+//     />
+//   )}
+
+// </nav>
+
     <nav className='fixed z-50 w-full top-0 left-0 right-0 transition-all duration-700 ease-in-out'>
         {/* Top nav */}
         <div className='sticky w-full flex items-center z-1 justify-between p-2 px-5 bg-[#066e3b]'>

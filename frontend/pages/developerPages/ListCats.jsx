@@ -58,9 +58,9 @@ const ListCats = () => {
     }, [])
 
   return (
-    <div>
+    <div className='space-y-2 py-2'>
         <p className='text-blue-500'>Available categories (<span className='text-green-500'>{mainHold.length}</span>)</p>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 px-2'>
             {mainHold?.map((i)=>(
                 <div key={i.category_id} className='flex items-center shadow justify-center gap-2 border border-gray-200 rounded-md'>
                     <div className='flex-1 h-full p-2 flex flex-col justify-between'>

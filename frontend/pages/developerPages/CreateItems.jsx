@@ -21,7 +21,7 @@ const CreateItems = () => {
       description: '',
       category: '',
       source: '',
-      infos: [],
+      infos: [{qty: "", cost: "", details: ""}],
       thumbnails: [],
       categoryImage: {}
     })
@@ -52,12 +52,12 @@ const CreateItems = () => {
 
   const handleChange = (e, field, index)=>{
     setFormData((prev)=>({...prev, 
-      infos: prev.infos.map((info, i)=> index === i ? {...info, [field]: e.target.value}: info)
-    }))
+      infos: prev.infos.map((info, i)=> index === i ? 
+      {...info, [field]: e} : info)}))      
   }
 
   const addNewBlock = ()=>{
-    setFormData((prev)=>({...prev, infos: {qty: "", cost: "", details: ""} }))   
+    setFormData((prev)=>({...prev, infos: [...prev.infos, {qty: "", cost: "", details: ""}] }))   
   }
 
   const handleInsertImage = (e)=>{
@@ -142,7 +142,7 @@ const CreateItems = () => {
     }, [])
 
   return (
-    <div className='flex flex-col h-full w-full p-1'>
+    <div className='flex flex-col gap-5 h-full w-full p-1'>
 
       {/*-----------------------------------------
         items
