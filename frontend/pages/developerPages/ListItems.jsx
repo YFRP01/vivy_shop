@@ -50,9 +50,9 @@ const ListItems = () => {
         setItemToViewDetails(null)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
+    window.document.addEventListener('mousedown', handleClickOutside)
     return ()=>{
-      document.removeEventListener('mousedown', handleClickOutside)
+      window.document.removeEventListener('mousedown', handleClickOutside)
     }
   },[])
 

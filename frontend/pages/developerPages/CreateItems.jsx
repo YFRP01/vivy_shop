@@ -135,9 +135,9 @@ const CreateItems = () => {
         }
     }
 
-    document.addEventListener('mousedown',handle)
+    window.document.addEventListener('mousedown',handle)
     return (()=>{
-        document.removeEventListener('mousedown', handle)
+        window.document.removeEventListener('mousedown', handle)
     })
     }, [])
 

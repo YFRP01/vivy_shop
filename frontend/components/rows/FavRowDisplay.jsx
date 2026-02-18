@@ -2,17 +2,16 @@ import axios from 'axios';
 import React, { useState } from 'react'
 import { API_URL } from '../../api';
 import { Heart, Verified } from 'lucide-react';
-import ViewMore from '../ViewMore';
 
 const FavRowDisplay = ({viewID, index, item, info, order_status}) => {
-    const [like, setLike] = useState(item.liked)
+    const [liking, setLiking] = useState(item.liked)
 
     const editLike = async ()=>{
         try {
             const result = await axios.put(`${API_URL}/liked/${viewID}`,{
-                liked: like
+                liked: !liking
             })
-            setLike(result.data.liked)
+            setLiking(result.data.liked)
         } catch (error) {
             console.log(error.message);
         }
@@ -29,14 +28,14 @@ const FavRowDisplay = ({viewID, index, item, info, order_status}) => {
         <td className='border p-1 text-center'>{info?.qty}</td> 
         <td className='border p-1 text-center'>{info?.cost}</td>
         <td className='border p-1 text-center'>{order_status? 
-                (<Verified size={17} className='fill-green-500 text-white'/>):(<Verified size={17} className='fill-red-500 text-white'/>)}</td>
+            (<Verified size={17} className='fill-green-500 w-full text-white'/>):(<Verified size={17} className='fill-orange-500 w-full text-white'/>)}
+        </td>
         <td className='border p-1 text-center' >
-            {like ? 
+            {liking ? 
             (<Heart className='fill-red-500 text-red-500 cursor-pointer' onClick={()=>(editLike())}/>)
             :
             (<Heart className='fill-gray-600 text-gray-600 cursor-pointer' onClick={()=>(editLike())}/>)}
         </td>
-        {/* {viewDetails && <ViewMore viewID={viewID} editLike={editLike} item={item} like={like} isView={viewDetails} setIsView={setViewDetails} info={info} order_status={order_status} viewDetails={viewDetails} setViewDetails={setViewDetails} />} */}
     </>
   )
 }

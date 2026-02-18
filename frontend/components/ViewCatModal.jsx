@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import EditItem from './EditItem'
-import { CircleAlert, Pointer, XCircle } from 'lucide-react'
+import { CircleAlert, XCircle } from 'lucide-react'
 
 const ViewCatModal = ({hold }) => {
     const itemRef = useRef()
@@ -55,7 +55,7 @@ const ViewCatModal = ({hold }) => {
             </div>
             {viewItemModal && (
                 <div className='h-screen w-screen z-50 fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex items-center justify-center '>
-                <div ref={itemRef} className='bg-white p-8 shadow-lg h-[80%] space-y-5 w-[90%] rounded-xl md:p-4 lg:p-6 relative'>
+                <div /*ref={itemRef}*/ className='bg-white p-8 shadow-lg h-[80%] space-y-5 w-[90%] rounded-xl md:p-4 lg:p-6 relative'>
                     <div className='w-full absolute top-0 right-0 p-2 text-red-500 flex items-center justify-end'>
                     <XCircle className='cursor-pointer w-7 h-7' onClick={()=>(setViewItemModal(false))} />
                     </div>
