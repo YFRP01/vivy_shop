@@ -20,7 +20,8 @@ router.get("/developer", async (req, res)=>{
         const {category} = req.query
         const cat = []
         let holdQuery = `
-            SELECT cat.category_id, cat.category_name,
+            SELECT cat.category_id, cat.category_name, cat.image, 
+            cat.created_at::time AS time, cat.created_at::date AS date,
                 COALESCE (
                     json_agg(
                         json_build_object(
