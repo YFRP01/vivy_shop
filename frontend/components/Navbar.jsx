@@ -1,4 +1,4 @@
- import { AlertCircle, Boxes, Heart, Home, Menu, MenuIcon, PilcrowLeft, Plus, Search, Settings, ShoppingBag, User2, X } from 'lucide-react'
+ import { AlertCircle, Boxes, Fullscreen, Heart, Home, Menu, MenuIcon, PilcrowLeft, Plus, Search, Settings, ShoppingBag, User2, X } from 'lucide-react'
 import React, { useRef } from 'react'
 import { useEffect } from 'react';
 import { useState } from 'react'
@@ -20,6 +20,7 @@ const Navbar = () => {
     const navigate = useNavigate()
     const category = searchParams.get('category') || 'all';
     const location = useLocation()
+    const [fullwidthMenu, setFullWidthMenu] = useState(false)
 
     const handleCategory = (category)=>{
         setPlaceholder(`> Category : ${category}`)
@@ -61,6 +62,9 @@ const Navbar = () => {
         }
     }
 
+    const handleFullCat = ()=>{
+        setFullWidthMenu(!fullwidthMenu)   
+    }
     
     useEffect(()=>{
          if (!searchParams.get('category')) {
@@ -137,21 +141,27 @@ const Navbar = () => {
             {/* menu */}
             {isMenuOpen && (
             <div className={`fixed  bg-black/70 z-61 top-0 left-0 right-0 bottom-0 h-screen transition-all duration-200 ease-in`}>
-                <div ref={menuRef} className={`border-r bg-white border-green-500 transform transition-transform ${isMenuOpen ? 'translate-y-0':'-translate-200'} duration-2000 ease-in h-full w-2/3 md:w-1/3 lg:w-1/4`}>
+                <div ref={menuRef} className={`border-r bg-white border-green-500 transform transition-transform 
+                ${isMenuOpen ? 'translate-x-0':'-translate-x-200'} duration-700 ease-in h-full 
+                ${fullwidthMenu ? 'w-full': 'w-2/3 md:w-1/3 lg:w-1/4'}`}>
                     <div className='border-b border-blue-500 flex justify-between items-center px-2 py-2 text-blue-500 font-medium text-md md:text-lg'>
                         <span>Categories</span>
-                        <X onClick={()=>(setIsMenuOpen(false))} size={20} className='text-red-500' />
+                        <div className='flex gap-2 items-center'>
+                            <X onClick={()=>(setIsMenuOpen(false))} size={20} className='text-red-500' />
+                            <Fullscreen onClick={()=>(handleFullCat())} size={20} className='text-black' />                    
+                        </div>
                     </div>
+                    <div className='bg-linear-to-br from-white to-green-100 h-full'>
                     {categories.length > 0 ? 
                         (
-                            <div className='bg-linear-to-tr gap-1 capitalize text-sm md:text-md from-white to-green-50 flex flex-col h-full'>
+                            <div className={`pt-4 flex ${fullwidthMenu ? ' text-gray-900 font-normal flex-wrap gap-4':'flex-col h-full gap-2'}  p-1 text-xs md:text-sm capitalize md:text-md`}>
                                 <div onClick={()=>(handleCategory('all'))}
-                                    className={`w-full px-2 hover:bg-gray-100 p-1 ${category === 'all' && 'bg-green-400 font-semibold text-green-900'}`}>
+                                    className={`${fullwidthMenu ? 'w-fit flex justify-center items-center rounded-xl border border-gray-400':'w-full'} px-5 py-1 h-fit hover:bg-gray-100 p-1 ${category === 'all' && 'bg-green-300 border-green-500 font-semibold text-green-900'}`}>
                                         all
                                 </div>
                                 {categories.map((cat)=>(
                                     <div key={cat.category_id} onClick={()=>(handleCategory(cat.category_name))}
-                                    className={`w-full px-2 hover:bg-gray-100 p-1 ${category === cat.category_name && 'bg-green-400 font-semibold text-green-900'}`}>
+                                    className={` ${fullwidthMenu ? 'w-fit rounded-xl border border-gray-400':'w-full'}  px-3 py-1 h-fit hover:bg-gray-100 p-1 ${category === cat.category_name && 'bg-green-300 border-green-500 font-semibold text-green-900'}`}>
                                         {cat.category_name}
                                     </div>
                                 ))}
@@ -161,7 +171,7 @@ const Navbar = () => {
                                 <AlertCircle size={15} className={``} />
                                 <span>No category found!</span>
                             </div>
-                    )}
+                    )}                    </div>
                 </div>
             </div>
             )}
