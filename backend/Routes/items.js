@@ -44,10 +44,6 @@ router.get("/", async (req, res) => {
       query += ` ORDER BY i.item_id `;
      
     const result = await pool.query(query, params);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'No items found' });
-    }
     
     res.json(result.rows);
   } catch (error) {

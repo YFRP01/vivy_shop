@@ -109,8 +109,7 @@ router.delete("/:order_id", async (req,res)=>{
         console.log(`The order doesn't exist`);
         
     } else
-    res.status(200).json(deleteQuery.rows[0]
-    )
+    res.status(200).json(deleteQuery.rows[0])
     } catch (error) {
         res.send(500).json(`Unable to delete order: ${error.message}`)
     }

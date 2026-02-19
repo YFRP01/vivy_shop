@@ -4,6 +4,9 @@ import { API_URL } from '../api.js';
 import { useSearchParams } from 'react-router-dom';
 import CategoryCard from '../components/cards/CategoryCard.jsx';
 import ItemCards from '../components/cards/ItemCards.jsx';
+import NotFoundPage from '../components/NotFoundPage.jsx';
+import { AlertCircle } from 'lucide-react';
+import PageTitle from '../components/PageTitle.jsx';
 
 const Home = () => {
 
@@ -47,23 +50,36 @@ const Home = () => {
     }, [category])
 
   return (
-    <div className='flex flex-col gap-5 p-1'>
+    <div className='space-y-0 p-1 h-full '>
         <div className='flex flex-col w-full h-full bg-white'>
-            <div className='w-full px-5 shadow py-1 bg-gray-100 text-lg  font-sans'>Categories ({categories.length})</div>
-            <div className='flex bg-white px-5 overflow-x-scroll h-60 items-center gap-2'>
-                {categories.map((cat)=>(
-                    <div key={cat.category_id} className=''>
-                        <CategoryCard cat={cat} />
+            {/* {categories.length} */}
+            {categories.length > 0 ? (
+                <div className='bg-gray-100'>
+                    <PageTitle title='home' sub={categories.length} />
+                    <div className='flex bg-white px-5 overflow-x-scroll h-60 items-center gap-2'>
+                        {categories.map((cat)=>(
+                            <div key={cat.category_id} className=''>
+                                <CategoryCard cat={cat} />
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </div>
+            ):
+            (<div className='h-60 text-gray-400 flex items-center justify-center gap-1 '>
+                <AlertCircle size={15} />
+                <span>No categories found!</span></div>)}
         </div>
-        <div className='w-full px-2 md:px-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-center gap-2'>
-        {items.slice(startIndex, endIndexValue).map((item)=>(
-            <div key={item.item_id} className=''>
-                <ItemCards item={item}/>
-            </div>
-        ))}
+        <div className='relative p-1 w-full'>
+            {items.length > 0 ? (
+                <div className='w-full px-2 md:px-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-center gap-2'>
+                    {items.slice(startIndex, endIndexValue).map((item)=>(
+                    <div key={item.item_id} className=''>
+                        <ItemCards item={item}/>
+                    </div>))}
+                </div>)
+                :
+                (<NotFoundPage category={category} type=''/>
+            )}
         </div>
         <div className={`${items.length > amountDisplayedQty ? 'block':'hidden'} cursor-pointer flex items-center justify-center w-full text-gray-700 `}>
             <div className='bg-white rounded text-sm p-1 border border-gray-700'>
