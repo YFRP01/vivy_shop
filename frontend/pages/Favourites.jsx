@@ -2,107 +2,113 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { API_URL } from '../api';
 import { useSearchParams } from 'react-router-dom';
+import { Check, Heart, TypeIcon, X } from 'lucide-react';
 import ViewMore from '../components/ViewMore';
-import { Heart, Verified } from 'lucide-react';
-
 
 const Favourites = () => {
     
-    const [searchParams] = useSearchParams()
-    let category = searchParams.get('category') || 'all';
-    const [itemArray, setItemArray] = useState([])
-    const [viewId, setViewId] = useState(null)
-    const [viewItem, setViewItem] = useState({})
+    const [searchparams] = useSearchParams()
+    let category = searchparams.get('category')
 
-    // setCategory(searchParams.get('category'))
-    const getLikedItem = async()=>{
+    const [allObject, setAllObject] = useState([])
+    const [isViewModal, setIsViewModal] = useState(false)
+    const [likedItemId, setLikedItemId] = useState(null)
+
+    const getFavItems = async () =>{
         try {
             const result = await axios.get(`${API_URL}/liked/?category=${category}`)
-            setItemArray(result.data) 
+            setAllObject(result.data)
         } catch (error) {
-            console.log(`Unable to get the liked items ${error.message}`);
+            console.log(`Unable to get liked items: ${error.message}`);   
         }
     }
 
-    const [liking, setLiking] = useState(false)
-    const [viewDetails, setViewDetails] = useState(false)   
-    
-    const editLike = async ()=>{
-        console.log(liking);
-        {console.log(`i.item_id: ${viewId}, i.item.liked: ${liking}`)}
+    const toggleLike = async(id)=>{
         try {
-            const result = await axios.put(`${API_URL}/liked/${viewId}`,{
-                liked: liking
+            const result = await axios.put(`${API_URL}/liked/${id}`,{
+                liked: allObject[allObject?.findIndex((i)=> i.item?.item_id === id)]?.item?.liked
             })           
-            setLiking(result.data.liked)
+
+            setAllObject((prev)=>
+                prev.map((i)=> i.item?.item_id === id ? 
+                        {...i, item: {...i.item, ...result.data}}: i
+                )
+            )
         } catch (error) {
-            console.log(error.message);
+            console.log(`Unable to edit the like/ulike the item: ${error.message}`);
+            
         }
     }
     
+    const handleModal= (e,id)=>{
+        e.stopPropagation()
+        setIsViewModal(true)
+        setLikedItemId(id)
+        console.log(id);   
+    }
+
+    const handleLike = (e,likeId) =>{
+        e.stopPropagation()
+        toggleLike(likeId)
+    }
 
     useEffect(()=>{
-        getLikedItem()
-    },[category])
+        getFavItems()
+    }, [category])
 
 
-    return(
-        <div>
-            <div className='w-full flex flex-col gap-2 overflow-x-auto'>
-            {itemArray.length === 0 ? 
-            (<div className='w-full h-full text-gray-600 py-80 absolute flex items-center justify-center'>No liked element found for the category "{category}".</div>)
-            :
-            (
-                <div>
-                    <div className='w-full flex flex-col gap-2 overflow-x-auto'>
-                    {itemArray.length === 0 ? 
-                    (<div className='w-full h-full text-gray-600 py-80 absolute flex items-center justify-center'>No liked element found for the category "{category}".</div>):
-                    (
-                    <table className='w-full border text-sm md:text-base'>
-                        <thead>
-                            <tr className='bg-blue-200'>
-                                <th className='border p-1'>SN</th>
-                                <th className='border p-1'>Name</th>
-                                <th className='border p-1'>Category</th>
-                                <th className='border p-1'>Description</th>
-                                <th className='border p-1'>Details</th>
-                                <th className='border p-1'>Qty</th>
-                                <th className='border p-1'>Cost</th>
-                                <th className='border p-1'>Status</th>
-                                <th className='border p-1'>Like</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {itemArray.map((i, index)=>(
-                                <tr key={i.item_id} 
-                                    className='border cursor-pointer hover:bg-gray-50'>
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))} className='border p-1 text-center'>{index+1}</td>
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))} className='border p-1'>{i.item?.name}</td>
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))} className='border p-1 text-center'>{i.item?.category}</td>
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))} className='border p-1 text-center'>{i.item?.description?.length > 50 ? i.item?.description?.slice(0, 50) + '...' : i.item?.description}</td>
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))} className='border p-1 text-center'>{i.info?.details}</td>
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))} className='border p-1 text-center'>{i.info?.qty}</td> 
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))} className='border p-1 text-center'>{i.info?.cost}</td>
-                                    <td onClick={()=>(setViewId(i.item.item_id), setViewItem(i.item), setViewDetails(!viewDetails))}
-                                     className='border p-1 text-center'>{i.order_status? 
-                                        (<Verified size={17} className='fill-green-500 w-full text-white'/>):(<Verified size={17} className='fill-orange-500 w-full text-white'/>)}
-                                    </td>
-                                    <td onClick={()=>(setViewId(i.item.item_id), editLike())}className='border p-1 text-center' >
-                                        {i.item.liked ? 
-                                        (<Heart size={50} className='fill-red-500 text-red-500'/>)
-                                        :
-                                        (<Heart size={50} className='fill-gray-600  text-gray-600'/>)}
-                                    </td>
-                                    {viewDetails && <ViewMore viewId={viewId} editLike={editLike} item={viewItem} like={liking} isView={viewDetails} setIsView={setViewDetails} info={i.info} order_status={i.order_status} viewDetails={viewDetails} setViewDetails={setViewDetails} />}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>)}
-            </div>
-            </div>)}
+  return (
+    <div className='w-full space-y-2'>
+        <h1 className='p-3'>Favourite ({allObject.length})</h1>
+        <div className=''>
+            <table className='w-full rounded-2xl'>
+                <thead>
+                    <tr className='uppercase'>
+                        <th className='px-4 py-2 border border-blue-200'>SN</th>
+                        <th className='px-4 py-2 border border-blue-200'>Name</th>
+                        <th className='px-4 py-2 border border-blue-200'>Category</th>
+                        <th className='px-4 py-2 border border-blue-200'>Ordered</th>
+                        <th className='px-4 py-2 border border-blue-200'>Liked</th>
+                    </tr>
+                </thead>
+                <tbody className=''>
+                    {allObject?.length < 1? (
+                        <div>No item found!</div>
+                    ): 
+                    (allObject?.map((row, index)=>(
+                        <tr key={row.item?.item_id} className='text-xs md:text-sm'
+                        onClick={(e)=>(handleModal(e, row.item?.item_id))}>
+                            <td className='px-3 py-2 text-center p-1 border border-blue-300 '>{index+1}</td>
+                            <td className='px-3 py-2 text-center p-1 border border-blue-300 '>{row.item?.name}</td>
+                            <td className='px-3 py-2 text-center p-1 border border-blue-300 '>{row.item?.category}</td>
+                            <td className='px-3 py-2 text-center p-1 border border-blue-300  '>
+                                <span className='flex justify-center items-center'>
+                                    {
+                                    row.order_status?
+                                        <Check className='text-green-500'/>:
+                                        <X className={`text-red-500`} />
+                                    }
+                                </span>
+                            </td>
+                            <td className='px-3 py-2 text-center p-1 border border-blue-300 '>
+                                <span className='flex justify-center items-center'>
+                                    {<Heart onClick={(e)=>(handleLike(e, row.item?.item_id))}
+                                     className={`${row.item?.liked? 'text-red-500 fill-red-500':'text-gray-500 fill-gray-500'}`}/>}
+                                </span>
+                            </td>
+                        </tr>
+                    )))}
+                </tbody>
+            </table>
         </div>
-        </div>
-    )
+
+        {isViewModal && <ViewMore likeValue={allObject[allObject?.findIndex((i)=> i.item.item_id === likedItemId)]?.item.liked} handleLike={handleLike} 
+        info={allObject[allObject?.findIndex((i)=> i.item.item_id === likedItemId)]?.info} 
+        item={allObject[allObject?.findIndex((i)=> i.item.item_id === likedItemId)]?.item} 
+        order_status={allObject[allObject?.findIndex((i)=> i.item.item_id === likedItemId)]?.order_status} 
+        setIsView={setIsViewModal} />}
+    </div>
+  )
 }
 
-export default Favourites;
+export default Favourites
