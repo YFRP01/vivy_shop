@@ -1,14 +1,16 @@
- import { Heart, Home, Menu, MenuIcon, PilcrowLeft, Plus, Search, X } from 'lucide-react'
-import React from 'react'
+ import { AlertCircle, Boxes, Heart, Home, Menu, MenuIcon, PilcrowLeft, Plus, Search, Settings, ShoppingBag, User2, X } from 'lucide-react'
+import React, { useRef } from 'react'
 import { useEffect } from 'react';
 import { useState } from 'react'
 import { API_URL } from '../api.js';
 import axios from 'axios';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useNotifications } from '../components/context/NotificationsContext.jsx'
+import PageTitle from './PageTitle.jsx';
 
 const Navbar = () => {
 
+    const menuRef = useRef()
     const {likedCount, setLikedCount} = useNotifications()
     const [inputValue, setInputValue] = useState('')
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -17,14 +19,12 @@ const Navbar = () => {
     const [placeholderValue, setPlaceholder] = useState('Search for an item ...')
     const navigate = useNavigate()
     const category = searchParams.get('category') || 'all';
-    const [selectedCat, setSelectedCat] = useState(category)
     const location = useLocation()
 
     const handleCategory = (category)=>{
-        setSelectedCat(category)
-        setPlaceholder(`Category : ${category}`)
+        setPlaceholder(`> Category : ${category}`)
         setsearchParams({category:category})
-        setIsMenuOpen(false)
+        // setIsMenuOpen(false)
         setsearchParams({category: category})
     }
     
@@ -82,28 +82,90 @@ const Navbar = () => {
         }
 
     }, [location.pathname])
+
+    useEffect(()=>{
+        const handleRef = (e)=>{
+            if(menuRef.current && !menuRef.current.contains(e.target)){
+                setIsMenuOpen(false)
+            }
+        }
+        window.addEventListener('mousedown', handleRef)
+        return(()=>{
+            window.removeEventListener('mousedown', handleRef)
+        })
+    },[])
+
         
   return (
-    <nav className='sticky top-0 left-0 right-0 flex gap-1 w-full z-60 bg-linear-to-b from-green-500 to-blue-500'>
-        <div className='flex-1  px-10 py-2 bg-yellow-500'>
-            <MenuIcon className='' size={20}/>
-        </div>
-        <div className='flex-3 flex flex-col py-1 items-center bg-red-500'>
-            <h1 className='uppercase'>shoply</h1>
-            <div className='w-full px-3'>
-                <lable className={`bg-white rounded-2xl flex py-1 px-2 items-center group`}>
-                    <Search size={16} className='focus:ring-2 focus:ring-blue-500 border-none focus:border focus:border-green-500 ' />
-                    <input type='search' 
-                    className='outline-none text-gray-500 text-sm md:text-md  px-3 py-1 w-full'
-                    placeholder='Search for an item...'
-                    onChange={(e)=>(setInputValue(e.target.value), handleSearch(e))} value={inputValue}
-                    />               
-                 </lable>
+    <nav className='sticky top-0 left-0 right-0 space-y-1 py-2 px-3 md:px-7 lg:px-10 w-full z-60 bg-slate-300'>
+        
+        {/* top */}
+        <div className='flex w-full'>
+            {/* left */}
+            <div className='px-1 py-2 flex gap-4 '>
+                <MenuIcon onClick={()=>(setIsMenuOpen(true))} className='fill-blue-500 cursor-pointer text-blue-500' size={30}/>
+                <Settings onClick={()=>(navigate('/developer'))} size={30} className=' cursor-pointer rounded-full text-gray-500 fill-gray-500'/>
+            </div>
+            {/* center */}
+            <div className='flex-1 flex items-center justify-center'>
+                <h1 onClick={()=>(navigate('/'))} className='cursor-pointer uppercase flex-1 text-center '>shoply</h1>
+            </div>
+            {/* right */}
+            <div className='px-1 py-2 flex gap-4'>
+                <div onClick={()=>(navigate(`/favourites?category=${category}`))} className='flex justify-center items-center relative text-red-500'>
+                    <Heart size={30} 
+                    className={`cursor-pointer fill-red-500`}/>
+                    <span className='absolute text-xs top-1.75 text-white'>{likedCount < 100 && likedCount}</span>
+                </div>
+                <Boxes onClick={()=>(navigate(`ordered?category=${category}`))} className='text-green-500 cursor-pointer' size={30}/>
             </div>
         </div>
-        <div className='flex-1 bg-orange-500'>
+            {/* input search */}
+        <div className='w-full flex gap-4 h-full items-center xl:px-4 md:px-9 lg:px-13'>
+            <label className={`bg-white flex-1 rounded-2xl flex py-1 px-4 items-center group`}>
+                <Search size={16} className='' />
+                <input type='text' 
+                className='outline-none text-gray-500 text-sm md:text-md  px-3 py-1 w-full'
+                placeholder={placeholderValue}
+                onChange={(e)=>(setInputValue(e.target.value), handleSearch(e))} value={inputValue}
+                />   
+                <X className='' size={16}/>            
+                </label>
+            </div>
 
-        </div>
+            
+            {/* menu */}
+            {isMenuOpen && (
+            <div className={`fixed  bg-black/70 z-61 top-0 left-0 right-0 bottom-0 h-screen transition-all duration-200 ease-in`}>
+                <div ref={menuRef} className={`border-r bg-white border-green-500 transform transition-transform ${isMenuOpen ? 'translate-y-0':'-translate-200'} duration-2000 ease-in h-full w-2/3 md:w-1/3 lg:w-1/4`}>
+                    <div className='border-b border-blue-500 flex justify-between items-center px-2 py-2 text-blue-500 font-medium text-md md:text-lg'>
+                        <span>Categories</span>
+                        <X onClick={()=>(setIsMenuOpen(false))} size={20} className='text-red-500' />
+                    </div>
+                    {categories.length > 0 ? 
+                        (
+                            <div className='bg-linear-to-tr gap-1 capitalize text-sm md:text-md from-white to-green-50 flex flex-col h-full'>
+                                <div onClick={()=>(handleCategory('all'))}
+                                    className={`w-full px-2 hover:bg-gray-100 p-1 ${category === 'all' && 'bg-green-400 font-semibold text-green-900'}`}>
+                                        all
+                                </div>
+                                {categories.map((cat)=>(
+                                    <div key={cat.category_id} onClick={()=>(handleCategory(cat.category_name))}
+                                    className={`w-full px-2 hover:bg-gray-100 p-1 ${category === cat.category_name && 'bg-green-400 font-semibold text-green-900'}`}>
+                                        {cat.category_name}
+                                    </div>
+                                ))}
+                            </div>
+                        ):(
+                            <div className=' h-full flex items-center justify-center text-gray-700 gap-1 text-center'>
+                                <AlertCircle size={15} className={``} />
+                                <span>No category found!</span>
+                            </div>
+                    )}
+                </div>
+            </div>
+            )}
+
     </nav>
 )
 }
