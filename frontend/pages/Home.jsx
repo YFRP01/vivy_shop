@@ -14,6 +14,7 @@ const Home = () => {
     const [items, setItems] = useState([]);
     const [searchParams] = useSearchParams()
     const category = searchParams.get('category') || 'all';
+    const search = searchParams.get('search') || ''
     const amountDisplayedQty = 10;
     const startIndex = 0;
     const [endIndexValue, setEndIndexValue] = useState(amountDisplayedQty)
@@ -21,7 +22,7 @@ const Home = () => {
        
     const getItems = async () => {
         try {
-            const res = await axios.get(`${API_URL}/items/?category=${category}`)
+            const res = await axios.get(`${API_URL}/items/?category=${category}&search=${search}`)
             setItems(res.data)
         } catch (error) {
             console.log(error.message)
@@ -46,16 +47,18 @@ const Home = () => {
     
     useEffect(()=>{
         getItems()
+    }, [category, search])
+
+    useEffect(()=>{
         getAllCategories()
-    }, [category])
+    }, [])
 
   return (
     <div className='space-y-0 p-1 h-full '>
         <div className='flex flex-col w-full h-full bg-white'>
-            {/* {categories.length} */}
+            <PageTitle title='home' sub={items.length} />
             {categories.length > 0 ? (
                 <div className='bg-gray-100'>
-                    <PageTitle title='home' sub={categories.length} />
                     <div className='flex bg-white px-5 overflow-x-scroll h-60 items-center gap-2'>
                         {categories.map((cat)=>(
                             <div key={cat.category_id} className=''>
@@ -72,8 +75,8 @@ const Home = () => {
         <div className='relative p-1 w-full'>
             {items.length > 0 ? (
                 <div className='w-full px-2 md:px-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-center gap-2'>
-                    {items.slice(startIndex, endIndexValue).map((item)=>(
-                    <div key={item.item_id} className=''>
+                    {items.slice(startIndex, endIndexValue).map((item, index)=>(
+                    <div key={index} className=''>
                         <ItemCards item={item}/>
                     </div>))}
                 </div>)

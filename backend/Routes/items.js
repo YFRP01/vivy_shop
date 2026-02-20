@@ -9,69 +9,108 @@ const router = Router();
 -----------------------------*/
 
 router.get("/", async (req, res) => {
-  const { category } = req.query;
+  const { category, search } = req.query;
   try {
     let query = '';
-    const params = [];
+    let params = []
     
     // Main view queries
       query = `
         SELECT 
-          i.item_id, 
-          i.name, 
-          (SELECT c1.category_name FROM categories c1 WHERE i.category_id = c1.category_id) AS category, 
-          i.liked,
-          (SELECT th.image FROM thumbnails th 
+            i.item_id, 
+            i.name,
+            (SELECT c1.category_name FROM categories c1 
+            WHERE i.category_id = c1.category_id) AS category, 
+            i.liked,
+            (SELECT th.image FROM thumbnails th 
             WHERE th.item_id = i.item_id 
             ORDER BY th.image_id LIMIT 1) AS thumbnail,
-          (SELECT json_build_object(
+            (SELECT json_build_object(
             'info_id', inf.info_id,
             'qty', inf.qty,
             'cost', inf.cost,
             'details', inf.details
-          ) FROM infos inf 
-          WHERE inf.item_id = i.item_id 
-          LIMIT 1) AS info
-        FROM items i 
-        `;
-      
-      if (category !== 'all') {
-        query += ` WHERE i.category_id IN
-		   (SELECT category_id FROM categories WHERE category_name ILIKE $1) `;
-        params.push(`%${category}%`);
-      }
-      
-      query += ` ORDER BY i.item_id `;
+            ) FROM infos inf 
+            WHERE inf.item_id = i.item_id 
+              LIMIT 1) AS info
+            FROM items i        `
+
+    if(search){
+        query+=` LEFT JOIN infos inf2 ON inf2.item_id=i.item_id `
+    }
+    if(search && category === 'all'){
+        query+=` WHERE
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		OR i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )
+		) `
+        params.push(`%${search}%`)
+    }
+    if(search && category !=='all'){
+        query+=`
+        WHERE
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		)
+		AND (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $2 )) `
+        params.push(`%${search}%`, `%${category}%`)
+    }
+    if(!search && category !=='all'){
+        query+=` WHERE (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )) `
+        params.push(`%${category}%`)
+    }
+
+    query += `GROUP BY i.item_id ORDER BY i.created_at `;
      
     const result = await pool.query(query, params);
     
     res.json(result.rows);
   } catch (error) {
     console.error('Unable to fetch items:', error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json(`Unable to get items for category="${category}" and search="${search}": ${error.message}`);
   }
 });
 
+
 router.get("/developer", async (req, res)=>{
   try {
-    const {category} = req.query
+    const {category, search} = req.query
     const params = []
-    let hold = ''
-    hold = `
+    let query = ''
+    query = `
         SELECT i.item_id, i.name, i.source, i.description, i.source, 
         i.created_at::DATE AS date,
         i.created_at::TIME AS time,
         (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS image,
         (SELECT cat.category_name FROM categories cat WHERE cat.category_id =  i.category_id) AS category
         FROM items i `;
-        if(category !== 'all'){
-          hold+=` WHERE i.category_id IN (
-          SELECT category_id FROM categories WHERE category_name ILIKE $1
-          ) `;
-        params.push(`%${category}%`);
-        }
-        hold+=` ORDER BY i.created_at DESC`
-    const response = await pool.query(hold, params)
+    if(search){
+        query+=` LEFT JOIN infos inf2 ON inf2.item_id=i.item_id `
+    }
+    if(search && category === 'all'){
+        query+=` WHERE
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		OR i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )
+		) `
+        params.push(`%${search}%`)
+    }
+    if(search && category !=='all'){
+        query+=`
+        WHERE
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		)
+		AND (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $2 )) `
+        params.push(`%${search}%`, `%${category}%`)
+    }
+    if(!search && category !=='all'){
+        query+=` WHERE (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )) `
+        params.push(`%${category}%`)
+    }
+
+    query+=` ORDER BY i.created_at DESC`
+    const response = await pool.query(query, params)
     if(response.length === 0){ return res.status(404).json(`No math found`)}
     res.status(200).json(response.rows)
   } catch (error) {

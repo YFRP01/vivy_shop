@@ -12,14 +12,14 @@ const Ordered = () =>{
     
     const [searchparams] = useSearchParams()
     let category = searchparams.get('category') || 'all'
-
+    let search = searchparams.get('search') || ''
     const [allObject, setAllObject] = useState([])
     const [isViewModal, setIsViewModal] = useState(false)
     const [likedItemId, setLikedItemId] = useState(null)
 
     const getOrderedsItem = async()=>{
         try {
-            const result = await axios.get(`${API_URL}/orders/?category=${category}`)
+            const result = await axios.get(`${API_URL}/orders/?category=${category}&search=${search}`)
             setAllObject(result.data) 
         } catch (error) {
             console.log(`Unable to get the liked items ${error.message}`);
@@ -69,7 +69,8 @@ const Ordered = () =>{
     }
     useEffect(()=>{
         getOrderedsItem()
-    }, [category])
+    }, [category, search])
+
 
 
   return (

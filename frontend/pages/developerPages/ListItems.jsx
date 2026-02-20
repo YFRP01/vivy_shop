@@ -4,11 +4,14 @@ import { API_URL } from '../../api'
 import DevItemsCards from '../../components/cards/DevItemsCards'
 import { Trash2, XCircle } from 'lucide-react'
 import EditItem from '../../components/EditItem'
+import { useSearchParams } from 'react-router-dom'
 
 const ListItems = () => {
 
   const detailsRef = useRef()
-
+  const [searchParams] = useSearchParams()
+  const category = searchParams.get('category') || 'all'
+  const search = searchParams.get('search') || ''
   const [holdItems, setHoldItems] = useState([])
   const [itemToDeleteId, setItemToDeleteId] = useState(null)
   const [viewDetailsModal, setViewDetailsModal] = useState(false)
@@ -16,7 +19,7 @@ const ListItems = () => {
 
   const getItems = async()=>{
     try {
-      const response = await axios.get(`${API_URL}/items/developer?category=all`)
+      const response = await axios.get(`${API_URL}/items/developer?category=${category}&search=${search}`)
       setHoldItems(response.data)
     } catch (error) {
       console.log(`Unable to get the saved items ${error.message}`);
@@ -35,13 +38,12 @@ const ListItems = () => {
   
   useEffect(()=>{
     deleteItem()
-      console.log(holdItems.length, itemToDeleteId);
 
   },[itemToDeleteId])
   
   useEffect(()=>{
     getItems()
-  },[])
+  },[category, search])
 
   useEffect(()=>{
     const handleClickOutside = (event) => {

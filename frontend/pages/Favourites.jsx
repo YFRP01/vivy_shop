@@ -11,14 +11,15 @@ const Favourites = () => {
     
     const [searchparams] = useSearchParams()
     let category = searchparams.get('category') || 'all'
-
+    let search = searchparams.get('search') || ''
     const [allObject, setAllObject] = useState([])
     const [isViewModal, setIsViewModal] = useState(false)
     const [likedItemId, setLikedItemId] = useState(null)
 
+    
     const getFavItems = async () =>{
         try {
-            const result = await axios.get(`${API_URL}/liked/?category=${category}`)
+            const result = await axios.get(`${API_URL}/liked/?category=${category}&search=${search}`)
             setAllObject(result.data)
         } catch (error) {
             console.log(`Unable to get liked items: ${error.message}`);   
@@ -55,7 +56,7 @@ const Favourites = () => {
 
     useEffect(()=>{
         getFavItems()
-    }, [category])
+    }, [category, search])
 
 
   return (

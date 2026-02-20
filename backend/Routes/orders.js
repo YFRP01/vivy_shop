@@ -5,7 +5,7 @@ const router = Router();
 
 
 router.get("/", async(req, res)=>{
-    const {category}= req.query
+    const {category, search}= req.query
     const params = []
     try {
         let query=`
@@ -26,18 +26,34 @@ router.get("/", async(req, res)=>{
                 'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id)
 		AS info		
         FROM items i
-		JOIN orders o ON o.item_id=i.item_id
-        
-	`
-    if(category !== 'all'){
-        query+=` WHERE i.category_id IN (
-			SELECT category_id FROM categories 
-            WHERE category_name ILIKE $1
-		) `
+		JOIN orders o ON o.item_id=i.item_id	`
+
+    if(search){
+        query+=` LEFT JOIN infos inf2 ON inf2.item_id=i.item_id `
+    }
+    if(search && category === 'all'){
+        query+=` WHERE
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		OR i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )
+		)`
+        params.push(`%${search}%`)
+    }
+    if(search && category !=='all'){
+        query+=`
+        WHERE
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		)
+		AND (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $2 )) `
+        params.push(`%${search}%`, `%${category}%`)
+    }
+    if(!search && category !=='all'){
+        query+=` WHERE (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )) `
         params.push(`%${category}%`)
     }
 
-    query+=` ORDER BY i.created_at DESC `
+    query+=` GROUP BY i.item_id, o.order_id ORDER BY i.created_at DESC `
 
         const getAll = await pool.query(query, params)
         res.status(200).json(getAll.rows)

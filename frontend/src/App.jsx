@@ -17,14 +17,14 @@ const App = () => {
   return (
       <div className="min-h-screen bg-slate-50">
         <Navbar />
-        <div className="mt-17.5">
+        <div>
           <Routes>
-          <Route path='/' element={<MainLayout />}>
+          {/* <Route path='/' element={<MainLayout />}> */}
             <Route index element={<Home />}/>
             <Route path='/item/:id' element={<ItemDetails />}/>
             <Route path="/favourites" element={<Favourites />}/>
             <Route path="/ordered" element={<Ordered />}/>          
-          </Route>
+          {/* </Route> */}
           <Route path='/developer' element={<DeveloperLayout />}>
             <Route index element={<CreateItems />} />
             <Route path='/developer/items/list' element={<ListItems />} />

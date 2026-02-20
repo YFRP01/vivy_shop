@@ -15,26 +15,33 @@ const Navbar = () => {
     const [inputValue, setInputValue] = useState('')
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [categories, setCategories] = useState([])
-    const [searchParams, setsearchParams] = useSearchParams()
+    const [searchParams, setSearchParams] = useSearchParams()
     const [placeholderValue, setPlaceholder] = useState('Search for an item ...')
     const navigate = useNavigate()
     const category = searchParams.get('category') || 'all';
+    const search = searchParams.get('search') || '';
     const location = useLocation()
     const [fullwidthMenu, setFullWidthMenu] = useState(false)
 
     const handleCategory = (category)=>{
         setPlaceholder(`> Category : ${category}`)
-        setsearchParams({category:category})
-        // setIsMenuOpen(false)
-        setsearchParams({category: category})
+        setSearchParams({
+            category:category,
+            search: search
+        })
     }
     
     const handleSearch = (e)=>{
-        if(e.key === 'Enter' && inputValue.trim()){
-            console.log('Searching for: ', inputValue);
-        }
+        // if(e.key === 'Enter' && inputValue.trim()){
+        const value = e.target.value
+        setInputValue(value)
+        setSearchParams({
+            category: category,
+            search:value
+        })
+        // }
     }
-
+    
     const getAllCategories = async ()=>{
         try {
             const res = await axios.get(`${API_URL}/categories`);
@@ -67,14 +74,17 @@ const Navbar = () => {
     }
     
     useEffect(()=>{
-         if (!searchParams.get('category')) {
-            setsearchParams({ category: 'all' })
-        }
         getAllCategories()
         getLikedNotif()
     },[])
 
     useEffect(()=>{
+
+        setSearchParams({
+            category: 'all',
+            search: ''
+        })
+
         let timer;
         if(location.pathname.includes('/favourites')){
             timer = setTimeout(()=>{ 
@@ -101,7 +111,7 @@ const Navbar = () => {
 
         
   return (
-    <nav className='sticky top-0 left-0 right-0 space-y-1 py-2 px-3 md:px-7 lg:px-10 w-full z-60 bg-slate-300'>
+    <nav className='sticky top-0 left-0 right-0 space-y-1 py-2 px-2 md:px-3 lg:px-7 w-full z-60 bg-slate-300'>
         
         {/* top */}
         <div className='flex w-full'>
@@ -112,35 +122,35 @@ const Navbar = () => {
             </div>
             {/* center */}
             <div className='flex-1 flex items-center justify-center'>
-                <h1 onClick={()=>(navigate('/'))} className='cursor-pointer uppercase flex-1 text-center '>shoply</h1>
+                <h1 onClick={()=>(navigate('/'))} 
+                className="cursor-pointer text-green-500 font-extrabold tracking-wide text-2xl">shoply</h1>
             </div>
             {/* right */}
             <div className='px-1 py-2 flex gap-4'>
                 <div onClick={()=>(navigate(`/favourites?category=${category}`))} className='flex justify-center items-center relative text-red-500'>
                     <Heart size={30} 
                     className={`cursor-pointer fill-red-500`}/>
-                    <span className='absolute text-xs top-1.75 text-white'>{likedCount < 100 && likedCount}</span>
+                    <span className='absolute text-xs top-1.75 text-white'>{likedCount < 100 && likedCount > 0 && likedCount}</span>
                 </div>
                 <Boxes onClick={()=>(navigate(`ordered?category=${category}`))} className='text-green-500 cursor-pointer' size={30}/>
             </div>
         </div>
             {/* input search */}
         <div className='w-full flex gap-4 h-full items-center xl:px-4 md:px-9 lg:px-13'>
-            <label className={`bg-white flex-1 rounded-2xl flex py-1 px-4 items-center group`}>
-                <Search size={16} className='' />
-                <input type='text' 
-                className='outline-none text-gray-500 text-sm md:text-md  px-3 py-1 w-full'
+            <label className={`group bg-white flex-1 rounded-2xl flex py-1 px-7 items-center group`}>
+                <Search size={16} className='text-blue-400' />
+                <input type='search' 
+                className='outline-none flex-1  text-gray-500 text-sm md:text-md  px-3 py-1 w-full'
                 placeholder={placeholderValue}
-                onChange={(e)=>(setInputValue(e.target.value), handleSearch(e))} value={inputValue}
+                onChange={(e)=>(handleSearch(e))} value={inputValue}
                 />   
-                <X className='' size={16}/>            
+                {/* <X className='' size={16}/> */}
                 </label>
             </div>
-
             
             {/* menu */}
             {isMenuOpen && (
-            <div className={`fixed  bg-black/70 z-61 top-0 left-0 right-0 bottom-0 h-screen transition-all duration-200 ease-in`}>
+            <div className={`fixed bg-black/50 backdrop-blur-xs z-11 top-0 left-0 right-0 bottom-0 h-screen transition-all duration-200 ease-in`}>
                 <div ref={menuRef} className={`border-r bg-white border-green-500 transform transition-transform 
                 ${isMenuOpen ? 'translate-x-0':'-translate-x-200'} duration-700 ease-in h-full 
                 ${fullwidthMenu ? 'w-full': 'w-2/3 md:w-1/3 lg:w-1/4'}`}>
@@ -151,17 +161,17 @@ const Navbar = () => {
                             <Fullscreen onClick={()=>(handleFullCat())} size={20} className='text-black' />                    
                         </div>
                     </div>
-                    <div className='bg-linear-to-br from-white to-green-100 h-full'>
+                    <div className='bg-linear-to-tl from-white to-blue-100 h-full'>
                     {categories.length > 0 ? 
                         (
-                            <div className={`pt-4 flex ${fullwidthMenu ? ' text-gray-900 font-normal flex-wrap gap-4':'flex-col h-full gap-2'}  p-1 text-xs md:text-sm capitalize md:text-md`}>
+                            <div className={`pt-4 overflow-y-auto flex ${fullwidthMenu ? ' text-gray-900 font-normal flex-wrap gap-4':'flex-col h-full gap-2'}  p-1 text-xs md:text-sm capitalize md:text-md`}>
                                 <div onClick={()=>(handleCategory('all'))}
-                                    className={`${fullwidthMenu ? 'w-fit flex justify-center items-center rounded-xl border border-gray-400':'w-full'} px-5 py-1 h-fit hover:bg-gray-100 p-1 ${category === 'all' && 'bg-green-300 border-green-500 font-semibold text-green-900'}`}>
+                                    className={`${fullwidthMenu ? 'w-fit rounded-xl px-5 border border-gray-400':'w-full px-3'} py-2 h-fit hover:bg-gray-100 p-1 ${category === 'all' && 'bg-green-300 border-green-500 font-semibold text-green-900'}`}>
                                         all
                                 </div>
                                 {categories.map((cat)=>(
                                     <div key={cat.category_id} onClick={()=>(handleCategory(cat.category_name))}
-                                    className={` ${fullwidthMenu ? 'w-fit rounded-xl border border-gray-400':'w-full'}  px-3 py-1 h-fit hover:bg-gray-100 p-1 ${category === cat.category_name && 'bg-green-300 border-green-500 font-semibold text-green-900'}`}>
+                                    className={` ${fullwidthMenu ? 'w-fit rounded-xl border border-gray-400':'w-full'} px-3 py-2 h-fit hover:bg-gray-100 p-1 ${category === cat.category_name && 'bg-green-300 border-green-500 font-semibold text-green-900'}`}>
                                         {cat.category_name}
                                     </div>
                                 ))}
@@ -171,7 +181,8 @@ const Navbar = () => {
                                 <AlertCircle size={15} className={``} />
                                 <span>No category found!</span>
                             </div>
-                    )}                    </div>
+                    )}
+                   </div>
                 </div>
             </div>
             )}

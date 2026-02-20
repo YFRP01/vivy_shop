@@ -4,7 +4,7 @@ import pool from "../db.js";
 const router = Router();
 
 router.get("/", async(req, res)=>{
-    const {category}= req.query
+    const {category, search}= req.query
     const params = []
     try {
         let query=`SELECT 
@@ -29,24 +29,40 @@ router.get("/", async(req, res)=>{
 			json_build_object(
 				'qty', o.order_qty, 
 				'cost', inf2.cost, 
-				'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id)
+				'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id LIMIT 1)
 		END AS info		
-        FROM items i 
-		LEFT JOIN orders o ON o.item_id=i.item_id
-        WHERE i.liked=true 
-        
+        FROM items i
+		LEFT JOIN orders o ON o.item_id=i.item_id                 
 	`
-    if(category !== 'all'){
-        query+=` AND i.category_id IN (
-			SELECT category_id FROM categories 
-            WHERE category_name ILIKE $1
+    if(search){
+        query+=` LEFT JOIN infos inf2 ON inf2.item_id=i.item_id `
+    }    
+
+    query+=` WHERE i.liked=true `
+    if(search && category === 'all'){
+        query+=`AND 
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		OR i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )
 		)`
+        params.push(`%${search}%`)
+    }
+    if(search && category !=='all'){
+        query+=`
+        AND 
+		(i.name ILIKE $1 OR i.description ILIKE $1
+		OR inf2.details ILIKE $1
+		)
+		AND (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $2 )) `
+        params.push(`%${search}%`, `%${category}%`)
+    }
+    if(!search && category !=='all'){
+        query+=` AND (i.category_id IN (SELECT category_id FROM categories WHERE category_name ILIKE $1 )) `
         params.push(`%${category}%`)
     }
 
-    query+=` ORDER BY i.liked_at DESC`
-
-        const getAll = await pool.query(query, params)
+    query+=` GROUP BY i.item_id, o.order_id ORDER BY i.liked_at DESC`
+    const getAll = await pool.query(query, params)
         res.status(200).json(getAll.rows)
     } catch (error) {
         res.status(500).json(`Unable to fetch the liked items: ${error.message}`)
