@@ -17,9 +17,9 @@ router.get("/", async (req, res)=>{
 
 router.get("/developer", async (req, res)=>{
     try {
-        const {category} = req.query
-        const cat = []
-        let holdQuery = `
+        const {category, search} = req.query
+        const params = []
+        let query = `
             SELECT cat.category_id, cat.category_name, cat.image, 
             cat.created_at::time AS time, cat.created_at::date AS date,
                 COALESCE (
@@ -37,14 +37,26 @@ router.get("/developer", async (req, res)=>{
                 FROM categories cat 
                 JOIN items i ON cat.category_id = i.category_id
                 `    
-    if(category && category !== 'all'){
-        cat.push(`%${category}%`)
-        holdQuery += ` WHERE cat.category_name ILIKE $1 `
+
+    if(search || category !=='all'){
+        query+=` WHERE
+		(cat.category_name ILIKE $1) `
+    }
+    if(search && category === 'all'){
+        params.push(`%${search}%`)
+    }
+    if(search && category !=='all'){
+        query+=`
+		AND (cat.category_name ILIKE $2) `
+        params.push(`%${search}%`, `%${category}%`)
+    }
+    if(!search && category !=='all'){
+        params.push(`%${category}%`)
     }
     
-    holdQuery+= ` GROUP BY cat.category_id ORDER BY cat.created_at DESC  `
+    query+= ` GROUP BY cat.category_id ORDER BY cat.created_at DESC  `
     
-    const response = await pool.query(holdQuery, cat)
+    const response = await pool.query(query, params)
     res.status(200).json(response.rows)
 
     } catch (error) {

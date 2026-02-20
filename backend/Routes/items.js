@@ -109,7 +109,7 @@ router.get("/developer", async (req, res)=>{
         params.push(`%${category}%`)
     }
 
-    query+=` ORDER BY i.created_at DESC`
+    query += `GROUP BY i.item_id ORDER BY i.created_at `;
     const response = await pool.query(query, params)
     if(response.length === 0){ return res.status(404).json(`No math found`)}
     res.status(200).json(response.rows)

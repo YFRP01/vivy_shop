@@ -5,6 +5,8 @@ import DevItemsCards from '../../components/cards/DevItemsCards'
 import { Trash2, XCircle } from 'lucide-react'
 import EditItem from '../../components/EditItem'
 import { useSearchParams } from 'react-router-dom'
+import NotFoundPage from '../../components/NotFoundPage'
+import PageTitle from '../../components/PageTitle'
 
 const ListItems = () => {
 
@@ -60,11 +62,13 @@ const ListItems = () => {
 
   return (
     <div className='w-full h-full relative'>
-      <div className='w-full px-2 text-green-500'>Items ({holdItems.length})</div>
       <div className='h-full'>
         {holdItems.length <= 0? 
-          (<div className='h-full text-gray-600 flex items-center justify-center'>No item found</div>):
+          (<div className='h-full relative text-gray-600 flex items-center justify-center'>
+            <NotFoundPage search={search} category={category} type='developer item'/>
+          </div>):
           (<div className='grid md:grid-cols-2 lg:grid-cols-3 gap-2 p-1'>
+          <PageTitle title='Items' sub={holdItems.length}/>
             {holdItems?.map((item)=>(
               <div key={item.item_id} 
               className='flex gap-2 items-center justify-center p-a' >

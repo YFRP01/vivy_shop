@@ -77,7 +77,7 @@ const Ordered = () =>{
     <div className='w-full flex flex-col h-screen space-y-2'>
         <div className='h-full w-full flex-1 relative'>
             {allObject?.length < 1? (
-                <NotFoundPage category={category} type='Ordered'/>
+                <NotFoundPage search={search} category={category} type='Ordered'/>
             ): 
             (
             <div className='space-y-2'>

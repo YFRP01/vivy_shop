@@ -81,7 +81,7 @@ const Home = () => {
                     </div>))}
                 </div>)
                 :
-                (<NotFoundPage category={category} type=''/>
+                (<NotFoundPage search={search} category={category} type=''/>
             )}
         </div>
         <div className={`${items.length > amountDisplayedQty ? 'block':'hidden'} cursor-pointer flex items-center justify-center w-full text-gray-700 `}>

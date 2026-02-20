@@ -5,6 +5,8 @@ import axios from 'axios'
 import { Edit2Icon, Eye, XCircle } from 'lucide-react'
 import ViewCatModal from '../../components/ViewCatModal'
 import EditCatModal from '../../components/EditCatModal'
+import NotFoundPage from '../../components/NotFoundPage'
+import PageTitle from '../../components/PageTitle'
 
 const ListCats = () => {
 
@@ -12,6 +14,7 @@ const ListCats = () => {
     const [searchParams] = useSearchParams()
     const [mainHold, setMainHold] = useState([])
     const category = searchParams.get('category') || 'all';
+    const search = searchParams.get('search') || '';
     const [vieCategoryModal, setViewCategoryModal] = useState(false)
     const [editCategoryModal, setEditCategoryModal] = useState(false)
     const [checkStatus, setCheckStatus] = useState(false)
@@ -20,7 +23,7 @@ const ListCats = () => {
 
     const getAll = async()=>{
         try {
-            const response = await axios.get(`${API_URL}/categories/developer?category=${category}`)
+            const response = await axios.get(`${API_URL}/categories/developer?category=${category}&search=${search}`)
             setMainHold(response.data)
         } catch (error) {
             console.log(`Unable to get the saved items ${error.message}`);
@@ -41,7 +44,7 @@ const ListCats = () => {
 
     useEffect(()=>{
         getAll()
-    }, [])
+    }, [category, search])
 
     useEffect(()=>{
         const handleClickOutside =(e)=>{
@@ -59,8 +62,10 @@ const ListCats = () => {
 
   return (
     <div className='space-y-2 py-2'>
-        <p className='text-blue-500'>Available categories (<span className='text-green-500'>{mainHold.length}</span>)</p>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 px-2'>
+        <div className='grid relative grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 px-2'>
+            {mainHold.length <= 0 ? (<NotFoundPage type='categories' category={category} search={search}/>):
+            (<div>
+            <PageTitle title='Available categories' sub={mainHold.length}/>
             {mainHold?.map((i)=>(
                 <div key={i.category_id} className='flex items-center shadow justify-center gap-2 border border-gray-200 rounded-md'>
                     <div className='flex-1 h-full p-2 flex flex-col justify-between'>
@@ -90,6 +95,7 @@ const ListCats = () => {
                     </div>
                 </div>
             ))}
+          </div>)}
         </div>
         {checkStatus && (
             <div className='h-screen w-screen z-50 fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex items-center justify-center '>
