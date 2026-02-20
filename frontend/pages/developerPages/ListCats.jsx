@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { API_URL } from '../../api'
+import { API_URL, BASE_URL } from '../../api'
 import axios from 'axios'
 import { Edit2Icon, Eye, XCircle } from 'lucide-react'
 import ViewCatModal from '../../components/ViewCatModal'
@@ -71,11 +71,11 @@ const ListCats = () => {
                     <div className='flex-1 h-full p-2 flex flex-col justify-between'>
                         <div className=''>
                             <p className='font-medium'>{i.category_name}</p>
-                            <p className='text-sm flex items-center w-full gap-1'>
+                            <div className='text-sm flex items-center w-full gap-1'>
                                 <div className='rounded-full w-fit h-fit p-1 bg-red-500'/>
                                 <span className='text-green-500 font-black'>{i.item.length}</span> 
                                 <span className='text-black font-normal'>item{ i.item.length !== 1 ? 's' : '' } connected</span>
-                            </p>
+                            </div>
                         </div>
                         <div className='flex flex-col'>
                             <div className='flex flex-col text-[10px] gap-1 text-gray-600'>
@@ -90,7 +90,8 @@ const ListCats = () => {
                             <Edit2Icon onClick={()=>handleEdit(i.category_name, i.category_id, i.image)}  size={20} className='text-green-500'/>
                         </div>
                         <div className='flex items-center justify-center bg-gray-50'>
-                            <img src={i.image} className='object-cover w-20 h-20 rounded-lg' />
+                            {console.log(i.image)}
+                            <img src={`${BASE_URL}${i.image}`} className='object-cover w-20 h-20 rounded-lg' />
                         </div>
                     </div>
                 </div>

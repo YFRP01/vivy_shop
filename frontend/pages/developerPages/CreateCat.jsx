@@ -41,16 +41,15 @@ const CreateCat = () => {
             }
         setLoading(true)
         try {
-            const data = new formData()
-            data.append("name", formData.name)
-            data.append("image", formData.image.image_url)
-            await axios.post(`${API_URL}/categories/developer`, data, {
-                headers: { 'Content-Type': 'multipart/form-data' }            
-            })
+            const data = new FormData()
+            data.append("name", formData.name.trim())
+            data.append("image", formData.image.file)
+            await axios.post(`${API_URL}/categories/developer`, data)
             setErrorOnSubmit('')
             clearForm()
         } catch (error) {
             console.log(error.message);
+            setErrorOnSubmit("Error submitting category")
         } finally {
             setLoading(false)
         }
@@ -95,7 +94,7 @@ const CreateCat = () => {
                 ):
                 (<label className='w-full flex items-center justify-center gap-1 text-gray-400'>
                     <Pointer size={20} />
-                    <input onChange={(e)=>(handleInsertImage(e))} type='file' accept='image/*' className='bg-red-500 hidden w-5' />
+                    <input required onChange={(e)=>(handleInsertImage(e))} type='file' accept='image/*' className='bg-red-500 hidden w-5'/>
                     <p>Select Image</p>
                 </label>)}
             </div>

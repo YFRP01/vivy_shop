@@ -1,4 +1,5 @@
 import express from 'express'
+import path from "path"
 import cors from 'cors'
 import itemRoutes from "./routes/items.js"
 import likedRoutes from "./Routes/liked.js"
@@ -6,7 +7,6 @@ import ordersRoutes from "./Routes/orders.js"
 import categoriesRoutes from "./Routes/categories.js"
 import infoRoutes from "./routes/info.js"
 import likedNotifRoutes from "./routes/liked_notifications.js"
-// import categoriesRoutes from "./Routes/categories.js"
 
 import dotenv from 'dotenv'
 dotenv.config();
@@ -17,6 +17,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static("uploads"))
 
 app.get('/', (req,res)=>{
     res.send('Good morning')

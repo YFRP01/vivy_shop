@@ -1,5 +1,7 @@
 import { Router } from "express";
 import pool from '../db.js'
+import { upload } from "../config/multer.js";
+
 
 const router = Router()
 
@@ -35,7 +37,7 @@ router.get("/developer", async (req, res)=>{
                 '[]' 
                 ) AS item
                 FROM categories cat 
-                JOIN items i ON cat.category_id = i.category_id
+                LEFT JOIN items i ON cat.category_id = i.category_id
                 `    
 
     if(search || category !=='all'){
@@ -64,18 +66,20 @@ router.get("/developer", async (req, res)=>{
     }
 })
 
-router.post("/developer", async(req, res)=>{
-        const {name, image} = req.body
+router.post("/developer", upload.single("image"), async(req, res)=>{
     try {
+        const {name} = req.body
+        const imageFile = req.file
+        const imagePath = `/uploads/categories/${imageFile.filename}`
         if(!name){
-            res.status(400).json("Insert name!")
+            return res.status(400).json("Insert name!")
         }
-        if(!image){
-            res.status(500).json("Insert image!")
+        if(!imageFile){
+            return res.status(400).json("Insert image!")
          }
         const response = await pool.query(`INSERT 
-            INTO categories (category_name, image) VALUES ($1, $2)`,
-            [name.trim(), image]
+            INTO categories (category_name, image) VALUES ($1, $2) RETURNING * `,
+            [name.trim(), imagePath]
         )
         res.status(201).json(response.rows[0])
     } catch (error) {
