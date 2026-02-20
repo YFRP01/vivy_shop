@@ -2,7 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
 import { sources } from '../../src/assets/assets'
-import { CircleAlert, Edit2, PlusCircle, PlusCircleIcon, X } from 'lucide-react'
+import { CircleAlert, Edit2, PlusCircle, PlusCircleIcon, Pointer, X } from 'lucide-react'
 import PreviewImage from '../../components/PreviewImage'
 
 

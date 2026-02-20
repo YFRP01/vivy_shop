@@ -64,6 +64,24 @@ router.get("/developer", async (req, res)=>{
     }
 })
 
+router.post("/developer", async(req, res)=>{
+        const {name, image} = req.body
+    try {
+        if(!name){
+            res.status(400).json("Insert name!")
+        }
+        if(!image){
+            res.status(500).json("Insert image!")
+         }
+        const response = await pool.query(`INSERT 
+            INTO categories (category_name, image) VALUES ($1, $2)`,
+            [name.trim(), image]
+        )
+        res.status(201).json(response.rows[0])
+    } catch (error) {
+        res.status(500).json(`Unable to post the item: ${error.message}`)
+    }
+})
 
 
 export default router
