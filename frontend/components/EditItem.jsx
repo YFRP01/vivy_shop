@@ -2,14 +2,12 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../api'
 import { sources } from '../src/assets/assets'
-import { ChevronDown, ChevronUp, CircleAlert, Edit, Edit2, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X, XCircle } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronUp, CircleAlert, Columns, Edit, Edit2, FlipVertical, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X, XCircle } from 'lucide-react'
 import PreviewImage from './PreviewImage'
 
-const EditItem = ({setViewDetailsModal, itemId}) => {
+const EditItem = ({itemId, selectedItem}) => {
 
   const ref = useRef()
-
-
   const startIndex = 1
   const [categories, setCategories] = useState([])
   const [isViewCategory, setViewCategory] = useState(false)
@@ -19,18 +17,25 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
   const [viewCat, setViewCat] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [backUpData, setBackupData] = useState(null)
-
+  const [infoError, setInfoError] = useState('')
+  const [selectInfosType, setSelectedInfosType] = useState('new')
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    source: '',
+    name: selectedItem.name,
+    description: selectedItem.description,
+    category: selectedItem.category,
+    source: selectedItem.source,
     infos: [],
     thumbnails: [],
     categoryImage: {}
   })
+  const [newInfoData, setNewInfoData] = useState([
+    {
+      qty: "",
+      cost: "",
+      details: ""
+    }
+  ])
 
-  
   const getDetails = async()=>{
     try {
         const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
@@ -77,11 +82,17 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
         i === index 
             ? { ...info, [field]: val }
             : info
-    )}))  }
+    )}))  
+  }
 
-  const addNewBlock = ()=>{
-    setFormData((prev)=>({...prev, infos: [...prev.infos, {qty: "", cost: "", details: ""}]})); 
-    setDisplayNum(formData.infos.length + 1)
+  const handleNewInfoChange = (e, field, index)=>{
+    const val = e.target.value
+    setNewInfoData((prev)=> (prev.map((item, i)=> index === i ? 
+        {...item, 
+          [field]: val
+        }
+          : item 
+    )))    
   }
 
   const handleInsertImage = (e)=>{
@@ -133,14 +144,38 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
     }
   }
 
+  const addNewBlock = ()=>{
+    if(newInfoData[newInfoData.length-1]?.cost && newInfoData[newInfoData.length-1]?.details && newInfoData[newInfoData.length-1]?.qty){
+        setNewInfoData((prev)=>([...prev, {qty: "", cost: "", details: ""}]))
+        setInfoError('')
+    }
+    else setInfoError('Empty field found!')
+  }
+
   const handleDelInfo = (index) =>{
     const update = formData.infos.filter((_, i)=> i !== index)
     setFormData(prev=>({...prev, infos: update}))
+    setInfoError('')
+  }
+
+  const handleNewDelInfo = (index) =>{
+    const updateNew = newInfoData.filter((_, i)=> i !== index)
+    if(newInfoData.length < 2){
+      setInfoError(`Fill this info or leave it empty`)
+    }
+    else {
+      setNewInfoData(updateNew)
+      setInfoError('')
+    }
   }
 
   const handleInfoMore = () =>{
-        if(displayNum === startIndex) setDisplayNum(formData.infos.length); 
-        else setDisplayNum(startIndex);      
+    if(displayNum === startIndex) setDisplayNum(formData.infos.length); 
+    else setDisplayNum(startIndex);      
+  }
+
+  const handleInfoType = (selectedInf) =>{
+    setSelectedInfosType(selectedInf)
   }
 
   const allCategories = async () =>{
@@ -151,6 +186,20 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
       console.log(`Unable to get all categories: ${error.message}`);
     }
   }
+
+  const getInfos = async()=>{
+    try {
+      const response = await axios.get(`${API_URL}/infos/${itemId}`)
+      const holdInfos = response.data
+      setFormData((prev)=>({...prev, infos: holdInfos}))
+    } catch (error) {
+      console.log(`Unable to get the infos ${error.message}`);
+    }
+  } 
+
+  useEffect(()=>{
+    getInfos()
+  }, [itemId])
 
   useEffect(()=>{
     getDetails()
@@ -174,7 +223,7 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
         window.document.removeEventListener('mousedown', handle)
     })
     }, []) 
-    
+   
 
   return (
     <div className='flex flex-col h-full gap-2 w-full px-2 md:px-30 lg:px-30 xl:px-40'>
@@ -196,7 +245,8 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Name <span className='text-red-500'>*</span></h2>
             <input 
-            type='text' value={formData?.name} placeholder='Enter the item name ...' onChange={((e)=>(setFormData((prev)=>({...prev, name: e.target.value}))))} 
+            type='text' value={formData?.name} placeholder={selectedItem?.name} 
+            onChange={((e)=>(setFormData((prev)=>({...prev, name: e.target.value}))))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
           </div>
@@ -204,7 +254,8 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Description</h2>
             <textarea 
-            onKeyDown={(e)=>(handleShow(e, 'Description', formData.description))} value={formData?.description} placeholder='Enter the item name ...' onChange={((e)=>(setFormData((prev)=>({...prev, description: e.target.value}))))} 
+            onKeyDown={(e)=>(handleShow(e, 'Description', formData.description))} 
+            value={formData?.description} placeholder={selectedItem.description} onChange={((e)=>(setFormData((prev)=>({...prev, description: e.target.value}))))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
           </div>
@@ -217,7 +268,8 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
               </div>
               <div className='flex text-[10px] items-center justify-between px-1'>
                 <label className='flex items-center gap-1'>
-                    <input type='checkbox' name='whichCat' onChange={(e)=>(setViewCat(e.target.checked))} checked={viewCat} className='cursor-pointer'/>
+                    <input type='checkbox' name='whichCat' 
+                    onChange={(e)=>(setViewCat(e.target.checked))} checked={viewCat} className='cursor-pointer'/>
                     Default
                 </label> 
               </div>
@@ -226,7 +278,7 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
               {!viewCat && (                  
                   <div className='lg:flex-1 flex items-center justify-center gap-2'>
                     <label className='w-full flex items-center '>
-                    <input type='text' placeholder='select' readOnly value={formData?.category} onClick={()=>(setViewCategory(!isViewCategory), setFormData((prev)=>({...prev, category: ''})))} 
+                    <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category} onClick={()=>(setViewCategory(!isViewCategory), setFormData((prev)=>({...prev, category: ''})))} 
                     className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
                     </label>
                   </div>
@@ -270,7 +322,7 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
             <div className='flex gap-2'>
               <p className='font-medium'>Source</p>
               <button onClick={()=>(setViewSource(!isViewSource))} className='border border-gray-500 min-w-30 cursor-pointer text-gray-500 px-1 rounded-sm'>
-                {formData.source? formData.source : 'select'}
+                {formData.source? formData.source : selectedItem.source}
               </button>
             </div>
             {isViewSource && (
@@ -298,12 +350,23 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
       -----------------------------------------*/}
       <div>
       <div className='flex flex-col'>
-          <p className='text-blue-500'>Infos (<span className='text-green-500'>{formData?.infos.length}</span>)</p>
+          <div className='text-blue-500'>
+              <p>Infos (<span className='text-green-500'>{formData?.infos.length}</span>)</p>
+              <div className='flex text-sm '>
+                    <p onClick={()=>(handleInfoType('new'))} className={`${selectInfosType === 'new' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Add</p>
+                    <p onClick={()=>(handleInfoType('old'))} className={`${selectInfosType === 'old' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Ancient</p>
+              </div>
+          </div>
+
+          {/* old */}
+          
+        {selectInfosType === 'old' &&
+        (<div>
           {formData?.infos.slice(0,displayNum).map((i, index)=>(
             <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
               <div className='flex justify-between px-2 p-1 text-sm'>
-                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-7 h-7 flex items-center justify-center rounded-full'>{index+1}</p>
-                <Trash onClick={()=>(handleDelInfo(index))} className='text-red-500 w-7 h-7 cursor-pointer'/>
+                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{index+1}</p>
+                <Trash onClick={()=>(handleDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
               </div>
          
           {/* Qty */}
@@ -332,12 +395,60 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
           </div>
           </div>
           ))}
-        </div>
-        <div className='flex items-center gap-5 p-2 justify-center'>
-            <button onClick={()=>(addNewBlock())} className='bg-blue-100 h-fit gap-1 p-2 text-blue-500 rounded-lg outline transitiion-all duration-800 ease-in bg-red-5000 flex items-center justify-center'>          
+        </div>)}
+
+        {/* new */}
+
+        {selectInfosType === 'new' &&
+        (<div className='space-y-2 py-2'>
+          {infoError && (
+            <div className='bg-red-50 text-red-500 flex gap-1 items-center justify-center transition-all duration-200 ease-in-out '>
+                <AlertCircle className='' size={15}/>
+                <p className='text-center'>{infoError}</p>
+            </div>          
+          )}
+          {newInfoData?.map((i, index)=>(
+            <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
+              <div className='flex justify-between px-2 p-1 text-sm'>
+                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{index+1}</p>
+                <Trash onClick={()=>(handleNewDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
+              </div>
+         
+          {/* Qty */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
+            <input 
+            type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleNewInfoChange(e, 'qty', index)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            required/>
+          </div>
+          {/* cost */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
+            <input 
+            type='number' value={i.cost} min={0} placeholder='Cost' onChange={((e)=>(handleNewInfoChange(e, 'cost', index)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            required/>
+          </div>
+          {/* details */}
+          <div className='flex gap-2 p-1'>
+            <h2 className='font-medium'>Details</h2>
+            <textarea
+            type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleNewInfoChange(e, 'details', index)))} 
+            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+            />
+          </div>
+          </div>
+          ))}
+            <button onClick={()=>(addNewBlock())} className='bg-blue-100 mx-auto m-2 h-fit gap-1 p-2 text-blue-500 rounded-lg outline transitiion-all duration-800 ease-in bg-red-5000 flex items-center justify-center'>          
                 <PlusCircle className='w-5 h-5' />
                 Add More Infos
             </button>
+        </div>)}
+        </div>
+
+        {selectInfosType === 'old' && (
+        <div className='flex items-center gap-5 p-2 justify-center'>
           {formData.infos.length>0 && <div className='flex items-center justify-center text-blue-500'>
           {formData.infos.length > startIndex &&
             <button onClick={()=>(handleInfoMore())} className='flex gap-1 items-center justify-center p-2 bg-blue-500 text-white rounded-lg outline'>
@@ -349,6 +460,9 @@ const EditItem = ({setViewDetailsModal, itemId}) => {
           }
         </div>}
         </div>
+        )}
+
+
       </div>
 
 

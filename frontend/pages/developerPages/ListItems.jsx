@@ -18,8 +18,9 @@ const ListItems = () => {
   const [itemToDeleteId, setItemToDeleteId] = useState(null)
   const [viewDetailsModal, setViewDetailsModal] = useState(false)
   const [itemToViewDetails, setItemToViewDetails] = useState(null)
+  const [selectedItem, setSelectedItem] = useState({})
 
-  const getItems = async()=>{
+  const getDevItems = async()=>{
     try {
       const response = await axios.get(`${API_URL}/items/developer?category=${category}&search=${search}`)
       setHoldItems(response.data)
@@ -27,6 +28,7 @@ const ListItems = () => {
       console.log(`Unable to get the saved items ${error.message}`);
     }
   }
+
 
   const deleteItem = async()=>{
     try {
@@ -44,7 +46,7 @@ const ListItems = () => {
   },[itemToDeleteId])
   
   useEffect(()=>{
-    getItems()
+    getDevItems()
   },[category, search])
 
   useEffect(()=>{
@@ -73,7 +75,7 @@ const ListItems = () => {
               <div key={item.item_id} 
               className='flex gap-2 items-center justify-center p-a' >
                   <button className='outline-none text-start w-full'
-                    onClick={()=>(setViewDetailsModal(true), setItemToViewDetails(item.item_id))}>
+                    onClick={()=>(setViewDetailsModal(true), setSelectedItem(item), setItemToViewDetails(item.item_id))}>
                   <DevItemsCards item={item} />
                   </button>
                   <Trash2 onClick={()=>(setItemToDeleteId(item.item_id), deleteItem())} className='text-red-500 fill-red-500 hover:text-red-800 hover:fill-red-800  trannsition-all duration-100 ease-in-out ' />
@@ -82,13 +84,13 @@ const ListItems = () => {
           </div>)}
         </div>
         {viewDetailsModal && 
-          <div className='h-screen w-screen z-50 fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex items-center justify-center '>
+          <div className='h-screen w-screen z-60 fixed top-0 left-0 right-0 bottom-0 bg-black/70 flex items-center justify-center '>
               <div ref={detailsRef} className='bg-white p-8 shadow-lg h-[80%] space-y-5 w-[90%] rounded-xl md:p-4 lg:p-6 relative'>
                 <div className='w-full absolute top-0 right-0 p-2 text-red-500 flex items-center justify-end'>
                   <XCircle className='cursor-pointer w-7 h-7' onClick={()=>(setViewDetailsModal(false))} />
                 </div>
                 <div className='overflow-y-auto h-full'>
-                    <EditItem setViewDetailsModal={setViewDetailsModal} itemId={itemToViewDetails} />  
+                    <EditItem setViewDetailsModal={setViewDetailsModal} selectedItem={selectedItem} itemId={itemToViewDetails} />  
                 </div>
               </div>
           </div>

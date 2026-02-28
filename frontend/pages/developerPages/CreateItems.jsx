@@ -1,7 +1,6 @@
 import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../../api'
-import { sources } from '../../src/assets/assets'
 import { CircleAlert, Edit2, PlusCircle, PlusCircleIcon, Pointer, X } from 'lucide-react'
 import PreviewImage from '../../components/PreviewImage'
 
@@ -15,6 +14,7 @@ const CreateItems = () => {
   const [isViewSource, setViewSource] = useState(false)
   const [isPreviewCard, setIsPreviewCard] = useState(false)
   const [viewCat, setViewCat] = useState(false)
+  const [sources, setSources] = useState([])
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [formData, setFormData] = useState({
       name: '',
@@ -113,18 +113,30 @@ const CreateItems = () => {
     
   }
 
+  const allSources = async ()=>{
+    try {
+      const response = await axios.get(`${API_URL}/sources`)
+      setSources(response.data)
+    } catch (error) {
+      console.log(error.message);
+      
+    }
+  }
+
+
   const allCategories = async () =>{
     try {
       const response = await axios.get(`${API_URL}/categories`)
       setCategories(response.data)
     } catch (error) {
-      console.log(`Unable to get all categories: ${error.message}`);
+      console.log(`${error.message}`);
     }
   }
 
   
   useEffect(()=>{
     allCategories()
+    allSources()
   }, [])
 
   useEffect(()=>{
@@ -242,10 +254,10 @@ const CreateItems = () => {
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
                    <div ref={ref} className='absolute top-71 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
                         {sources?.map((s)=>(
-                        <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
+                        <label key={s.source_id} onClick={(e)=>(handleRadio(e, s.source_name, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
-                            type='radio' onChange={(e)=>(setFormData((prev)=>({...prev, source:e.target.value})))} value={s.name} name='source' />
-                            {s.name}
+                            type='radio' onChange={(e)=>(setFormData((prev)=>({...prev, source:e.target.value})))} value={s.source_name} name='source' />
+                            {s.source_name}
                         </label>
                       ))}
                     </div>

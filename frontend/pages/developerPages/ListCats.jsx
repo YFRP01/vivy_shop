@@ -90,7 +90,6 @@ const ListCats = () => {
                             <Edit2Icon onClick={()=>handleEdit(i.category_name, i.category_id, i.image)}  size={20} className='text-green-500'/>
                         </div>
                         <div className='flex items-center justify-center bg-gray-50'>
-                            {console.log(i.image)}
                             <img src={`${BASE_URL}${i.image}`} className='object-cover w-20 h-20 rounded-lg' />
                         </div>
                     </div>

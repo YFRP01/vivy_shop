@@ -8,7 +8,8 @@ const CreateCat = () => {
 
     const editImageRef = useRef()
     const [loading, setLoading] = useState(false)
-    const [errorOnSubmit, setErrorOnSubmit] = useState('')
+    const [errorOnSubmit, setErrorOnSubmit] = useState({name: '', image: '', server: ''})
+    const [successMessage, setSuccessMessage] = useState('')
     const [viewImageModal, setViewImageModal] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
@@ -31,25 +32,28 @@ const CreateCat = () => {
 
     const handleSubmit = async(e)=>{
         e.preventDefault()
+        let hasError= false
             if(!formData.name.trim()){
-                setErrorOnSubmit("Insert the category name!")
-                return
+                setErrorOnSubmit((prev)=>({...prev, name: "Insert the category name!"}))
+                hasError = true
             }
             if(!formData.image.file){
-                setErrorOnSubmit("Insert the category image!")
-                return
+                setErrorOnSubmit((prev)=>({...prev, image: "Insert the category image!"}))
+                hasError = true
             }
+        if(hasError) return
+
         setLoading(true)
         try {
+            setErrorOnSubmit('')
             const data = new FormData()
             data.append("name", formData.name.trim())
             data.append("image", formData.image.file)
             await axios.post(`${API_URL}/categories/developer`, data)
-            setErrorOnSubmit('')
+            setSuccessMessage("Category successfully created!")
             clearForm()
         } catch (error) {
-            console.log(error.message);
-            setErrorOnSubmit("Error submitting category")
+            setErrorOnSubmit((prev)=>({...prev, server: error.message}))
         } finally {
             setLoading(false)
         }
@@ -67,18 +71,21 @@ const CreateCat = () => {
             </button>
             </div>
         </div>
-        {errorOnSubmit && (
-            <div className = {`bg0red-100 text-red-700 p-2 rounded mt-2`}></div>
+        {successMessage && (
+            <div className = {`bg-green-100 text-green-700 p-2 w-full rounded mt-2`}>{successMessage}</div>
         )}
-
-        <div className='flex gap-2 p-1'>
+        {errorOnSubmit.server && (
+            <div className = {`bg-red-100 text-red-700 p-2 w-full rounded mt-2`}>{errorOnSubmit.server}</div>
+        )}
+        <div className='flex gap-0 p-1'>
             <h2 className='flex font-medium'>Name <span className='text-red-500'>*</span></h2>
-            <div className='space-y-5  w-full flex flex-col justify-center items-center'>
+        <div className='space-y-2 relative w-full flex flex-col justify-center items-center'>
             <input 
             type='text' value={formData?.name} placeholder='Enter the item name ...' onChange={((e)=>(setFormData((prev)=>({...prev, name: e.target.value}))))} 
-            className={`focus:ring-2 flex-1 border w-full border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            required/>
-
+            className={`focus:ring-2 flex-1 border w-full border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }/>
+        {errorOnSubmit.name && (
+            <div className = {`bg-red-100 text-red-700 p-2 w-full rounded mb-2`}>{errorOnSubmit.name}</div>
+        )}
         <div className='flex border border-gray-200 w-100 h-100 gap-3 justify-center  overflow-x-auto'>
                 {formData?.image?.image_url ? (
                 <div className='relative flex  h-full items-center justify-center gap-1 text-gray-400 flex-col rounded-md border border-gray-400'>
@@ -94,10 +101,13 @@ const CreateCat = () => {
                 ):
                 (<label className='w-full flex items-center justify-center gap-1 text-gray-400'>
                     <Pointer size={20} />
-                    <input required onChange={(e)=>(handleInsertImage(e))} type='file' accept='image/*' className='bg-red-500 hidden w-5'/>
+                    <input onChange={(e)=>(handleInsertImage(e))} type='file' accept='image/*' className='bg-red-500 hidden w-5'/>
                     <p>Select Image</p>
                 </label>)}
             </div>
+            {errorOnSubmit.image && (
+                <div className = {`bg-red-100 text-red-700 p-2 w-full rounded `}>{errorOnSubmit.image}</div>
+            )}
             </div>
         </div>
         {viewImageModal && (<PreviewImage image={formData.image} setIsOpen={setViewImageModal} />)}

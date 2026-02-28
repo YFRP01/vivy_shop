@@ -78,12 +78,12 @@ router.get("/developer", async (req, res)=>{
     const params = []
     let query = ''
     query = `
-        SELECT i.item_id, i.name, i.source, i.description, i.source, 
+        SELECT i.item_id, i.name, i.description, s.source_name AS source, 
         i.created_at::DATE AS date,
         i.created_at::TIME AS time,
         (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS image,
         (SELECT cat.category_name FROM categories cat WHERE cat.category_id =  i.category_id) AS category
-        FROM items i `;
+        FROM items i LEFT JOIN sources s ON s.source_id = i.source_id `;
     if(search){
         query+=` LEFT JOIN infos inf2 ON inf2.item_id=i.item_id `
     }
@@ -109,7 +109,7 @@ router.get("/developer", async (req, res)=>{
         params.push(`%${category}%`)
     }
 
-    query += `GROUP BY i.item_id ORDER BY i.created_at `;
+    query += `GROUP BY i.item_id, s.source_id ORDER BY i.created_at `;
     const response = await pool.query(query, params)
     if(response.length === 0){ return res.status(404).json(`No math found`)}
     res.status(200).json(response.rows)
@@ -167,7 +167,7 @@ router.get('/:id', async (req, res) => {
       FROM items i
       LEFT JOIN thumbnails th ON th.item_id = i.item_id
       LEFT JOIN infos inf ON inf.item_id = i.item_id
-	  LEFT JOIN orders o ON o.item_id=i.item_id
+      LEFT JOIN orders o ON o.item_id=i.item_id
       WHERE i.item_id = $1
       GROUP BY i.item_id, o.order_id;`;
 
@@ -187,27 +187,22 @@ router.get('/:id', async (req, res) => {
 
 //edit items from dev dashboard
 router.put('/:id', async (req, res)=>{
+    try {
     const {id} = req.params;
-    const { name, category, source, liked_at, created_at,
-        thumbnails, infos
-     } = req.query;
-     const updateItems = (`UPDATE items 
+    const { name, category, source, liked_at, created_at, thumbnails, infos } = req.query;
+    const updateItems = (`UPDATE items 
             SET name = COALESCE(main, name),
             category=COALESCE(category, category), liked = false, source = COALESCE($3, source), 
             created_at = NOW(), liked_at = COALESCE($4, liked_at)
             WHERE item_id =$5;`, 
             [name, category, source, liked_at, id]);
     
-    try {
-        const result = await pool.query(`
-
-            `,
-            [id]);
-        res.send(200).json(result.rows[0])
+    const result = await pool.query( updateItems, [id]);
+    res.send(200).json(result.rows[0])
+    
     } catch (error) {
         res.status(500).json({error: "Unable to edit item"})
         console.log("Error:"+ error.json);
-        
     }
 })  
     
@@ -272,38 +267,6 @@ router.delete("/:item_id", async (req,res)=>{
 })
 
 
-// ------------------------------------------
-// get developer ItemCards
-// ------------------------------------------
-
-router.get("/developer", async (req, res)=>{
-  try {
-    const {category} = req.query
-    const params = []
-    let hold = ''
-    hold = `
-        SELECT i.item_id, i.name, i.source, i.description, i.source, 
-        i.created_at::DATE AS date,
-        i.created_at::TIME AS time,
-        (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS image,
-        (SELECT cat.category_name FROM categories cat WHERE cat.category_id =  i.category_id) AS category
-        FROM items i `;
-        if(category !== 'all'){
-          hold+=` WHERE i.category_id IN (
-          SELECT category_id FROM categories WHERE category_name ILIKE $1
-          ) `;
-        params.push(`%${category}%`);
-        }
-        hold+=` ORDER BY i.created_at DESC`
-    const response = await pool.query(hold, params)
-    if(response.length === 0){ return res.status(404).json(`No math found`)}
-    res.status(200).json(response.rows)
-  } catch (error) {
-    res.status(500).json(`Unable to get developer items: ${error.message}`)
-  }
-})
-
-
 //get with id
 router.get("/developer/:item_id", async(req, res)=>{
     try {
@@ -335,6 +298,17 @@ router.get("/developer/:item_id", async(req, res)=>{
     } catch (error) {
       res.status(500).json(`Unable to get item details: ${error.message}`)
     }
+})
+
+router.post("/developer", async(req, res)=>{
+  try {
+    const {name, description, category_id, source} = req.body
+    const response = await pool.query(`INSERT INTO items (name, description, category_id, source)
+	    VALUES ($1, $2, $3, $4) RETURNING *`, [name, description, category_id, source])
+      res.status(201).json(response.rows[0])
+  } catch (error) {
+    res.status(500).json(`Unable to create items: ${error.message}`)
+  }
 })
 
 

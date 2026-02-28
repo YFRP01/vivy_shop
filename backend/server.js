@@ -1,12 +1,15 @@
 import express from 'express'
 import path from "path"
 import cors from 'cors'
-import itemRoutes from "./routes/items.js"
+import itemRoutes from "./Routes/items.js"
 import likedRoutes from "./Routes/liked.js"
 import ordersRoutes from "./Routes/orders.js"
 import categoriesRoutes from "./Routes/categories.js"
-import infoRoutes from "./routes/info.js"
-import likedNotifRoutes from "./routes/liked_notifications.js"
+import infoRoutes from "./Routes/infos.js"
+import likedNotifRoutes from "./Routes/liked_notifications.js"
+import thumbnailsRoutes from "./Routes/thumbnails.js"
+import sourcesRoutes from "./Routes/sources.js"
+
 
 import dotenv from 'dotenv'
 dotenv.config();
@@ -28,10 +31,11 @@ app.use("/api/liked", likedRoutes)
 app.use("/api/orders", ordersRoutes)
 app.use("/api/categories", categoriesRoutes)
 app.use("/api/infos", infoRoutes)
+app.use("/api/thumbnails", thumbnailsRoutes)
 app.use("/api/liked_notifications", likedNotifRoutes)
+app.use("/api/sources", sourcesRoutes)
 
 
 app.listen(PORT, ()=>{
-    console.log(`Server is listening at port ${PORT}`);
-    
+    console.log(`Server is listening at port ${PORT}`);  
 })

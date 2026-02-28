@@ -68,15 +68,19 @@ router.get("/developer", async (req, res)=>{
 
 router.post("/developer", upload.single("image"), async(req, res)=>{
     try {
+        let hasError = false
         const {name} = req.body
         const imageFile = req.file
         const imagePath = `/uploads/categories/${imageFile.filename}`
         if(!name){
-            return res.status(400).json("Insert name!")
+            res.status(400).json("Insert name!")
+            hasError = true
         }
         if(!imageFile){
-            return res.status(400).json("Insert image!")
+            res.status(400).json("Insert image!")
+            hasError = true
          }
+         if(hasError) return
         const response = await pool.query(`INSERT 
             INTO categories (category_name, image) VALUES ($1, $2) RETURNING * `,
             [name.trim(), imagePath]
