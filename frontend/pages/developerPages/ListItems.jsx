@@ -29,7 +29,6 @@ const ListItems = () => {
     }
   }
 
-
   const deleteItem = async()=>{
     try {
       await axios.delete(`${API_URL}/items/${itemToDeleteId}`);

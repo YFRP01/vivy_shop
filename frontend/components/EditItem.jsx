@@ -10,7 +10,7 @@ const EditItem = ({itemId, selectedItem}) => {
   const ref = useRef()
   const startIndex = 1
   const [categories, setCategories] = useState([])
-  const [isViewCategory, setViewCategory] = useState(false)
+  const [isViewCategoryModal, setViewCategoryModal] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
   const [isPreviewCard, setIsPreviewCard] = useState(false)
   const [displayNum, setDisplayNum] = useState(startIndex)
@@ -26,7 +26,7 @@ const EditItem = ({itemId, selectedItem}) => {
     source: selectedItem.source,
     infos: [],
     thumbnails: [],
-    categoryImage: {}
+    categoryImage: categories[categories.findIndex((it)=> it.category_name === selectedItem.category)]?.image
   })
   const [newInfoData, setNewInfoData] = useState([
     {
@@ -61,7 +61,7 @@ const EditItem = ({itemId, selectedItem}) => {
         setFormData(backUpData)
       }
     setCategories([])
-    setViewCategory(false)
+    setViewCategoryModal(false)
     setViewSource(false)
     setIsPreviewCard(false)
     setViewCat(false)
@@ -127,9 +127,12 @@ const EditItem = ({itemId, selectedItem}) => {
 
   const handleRadio = (e, input, type)=>{
     if(type.includes('cat')){
+        setFormData(prev=>({...prev, 
+          category: input, 
+          categoryImage: categories[categories.findIndex((it)=> it.category_name === input)]?.image
+        }))
         setTimeout(() => {
-          setFormData(prev=>({...prev, category: input}))
-          setViewCategory(false)
+          setViewCategoryModal(false)
         }, 300);
     }
     else if(type.includes('source')) {
@@ -197,6 +200,14 @@ const EditItem = ({itemId, selectedItem}) => {
     }
   } 
 
+  const handleCategoryRadio = () =>{
+      setViewCategoryModal(!isViewCategoryModal)
+      // setFormData((prev)=>({...prev, 
+      //   category: '', 
+      //   categoryImage: {}
+      // }))  
+  }
+
   useEffect(()=>{
     getInfos()
   }, [itemId])
@@ -213,7 +224,7 @@ const EditItem = ({itemId, selectedItem}) => {
   useEffect(()=>{
     const handle = (event) => {
         if(ref.current && !ref.current.contains(event.target)){
-            setViewCategory(false)
+            setViewCategoryModal(false)
             setViewSource(false)
         }
     }
@@ -274,34 +285,50 @@ const EditItem = ({itemId, selectedItem}) => {
                 </label> 
               </div>
             </div>
-                <div className='flex flex-col lg:flex-row lg:items-center gap-1 w-full'>
-              {!viewCat && (                  
-                  <div className='lg:flex-1 flex items-center justify-center gap-2'>
-                    <label className='w-full flex items-center '>
-                    <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category} onClick={()=>(setViewCategory(!isViewCategory), setFormData((prev)=>({...prev, category: ''})))} 
-                    className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
-                    </label>
-                  </div>
-              )}
-              {viewCat && (
+            <div className='flex flex-col lg:flex-row lg:items-center gap-1 w-full'>
+              {/* {viewCat && ( */}
                   <div className={`lg:flex-1 flex gap-2 flex-col`}>
-                        <label className='w-full flex items-center'>
-                          <textarea type='text' 
-                          className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
-                          placeholder='Custom name ...' value={formData?.category} onChange={(e)=>(setFormData((prev)=>({...prev, category: e.target.value})))}/>
-                        </label>
-                        <label className='flex items-center justify-center w-full'>
-                          <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
-                            {formData?.categoryImage?.image_url ? (<img src={formData?.categoryImage?.image_url} alt='category preview' className='object-cover h-full w-full'/>):
-                            (<p className='text-center h-full flex items-center justify-center gap-2'><Pointer size='20' /><span>Select image</span></p>)}
-                          </div>
-                            {/* <img src={formData?.categoryImage?.image_url} alt={formData?.categoryImage ? 'category preview':'Select image'} className='object-cover h-20 lg:h-30 w-full rounded-md border text-gray-500 text-sm border-gray-300'/> */}
-                            <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
-                        </label>
+
+                    {!viewCat && (
+                    <div className={``}>
+                      <label className='w-full flex items-center '>
+                        <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category} onClick={()=>(handleCategoryRadio())} 
+                        className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
+                      </label>
+                      <label className='flex items-center justify-center w-full'>
+                        <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
+                          {formData?.categoryImage ? (
+                            <img src={formData?.categoryImage} alt='category preview' className='object-cover h-full w-full'/>)
+                            :
+                          (<p className='text-center h-full flex items-center justify-center gap-1'><AlertCircle size={15} /><span>No category image found</span></p>)}
+                        </div>
+                          <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
+                      </label>
+                    </div>
+                    )}
+
+                  {viewCat && (
+                      <div>
+                      <label className='w-full flex items-center'>
+                        <textarea type='text' 
+                        className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
+                        placeholder='Custom name ...' value={formData?.category} onChange={(e)=>(setFormData((prev)=>({...prev, category: e.target.value})))}/>
+                      </label>
+                    <label className='flex items-center justify-center w-full'>
+                      <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
+                        {formData?.categoryImage ? (<img src={formData?.categoryImage} alt='category preview' className='object-cover h-full w-full'/>):
+                        (<p className='text-center h-full flex items-center justify-center gap-2'>
+                          <Pointer size='20' />
+                          <span>Select image</span></p>
+                        )}
+                      </div>
+                        <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
+                    </label>
+                      </div>
+                    )}
                   </div>
-              )}
             </div>
-            {isViewCategory && (
+            {isViewCategoryModal && (
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-53'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
                    <div ref={ref} className='absolute top-43 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
