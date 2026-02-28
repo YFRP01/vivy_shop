@@ -1,6 +1,6 @@
 import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
-import { API_URL } from '../api'
+import { API_URL, BASE_URL } from '../api'
 import { sources } from '../src/assets/assets'
 import { AlertCircle, ChevronDown, ChevronUp, CircleAlert, Columns, Edit, Edit2, FlipVertical, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X, XCircle } from 'lucide-react'
 import PreviewImage from './PreviewImage'
@@ -17,6 +17,8 @@ const EditItem = ({itemId, selectedItem}) => {
   const [viewCat, setViewCat] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [backUpData, setBackupData] = useState(null)
+  const [handWrittenCategory, setHandWrittenCategory] = useState('')
+  const [handWrittenCategoryThumbnail, setHandWrittenCategoryThumbnail] = useState('')
   const [infoError, setInfoError] = useState('')
   const [selectInfosType, setSelectedInfosType] = useState('new')
   const [formData, setFormData] = useState({
@@ -57,9 +59,9 @@ const EditItem = ({itemId, selectedItem}) => {
   }
 
   const resetForm = ()=>{
-      if(backUpData){
-        setFormData(backUpData)
-      }
+    if(backUpData){
+      setFormData(backUpData)
+    }
     setCategories([])
     setViewCategoryModal(false)
     setViewSource(false)
@@ -67,7 +69,6 @@ const EditItem = ({itemId, selectedItem}) => {
     setViewCat(false)
     setSelectedImageIndex(null)
     setDisplayNum(startIndex)
-
   }
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
@@ -100,7 +101,7 @@ const EditItem = ({itemId, selectedItem}) => {
     const update = []
     if(!files) return
     for(let i=0; i < files.length; i++){
-        update.push({file: files[i], image_url: URL.createObjectURL(files[i])})
+        update.push(URL.createObjectURL(files[i]))
     } 
     setFormData((prev)=>({...prev, thumbnails: [...prev.thumbnails, ...update]}))
     e.target.value=""
@@ -108,9 +109,10 @@ const EditItem = ({itemId, selectedItem}) => {
 
   const handleInsertCategoryImage = (e)=>{
     const file = e.target.files[0]
-    const update = {file, image_url: URL.createObjectURL(file)}
-    if(!file) return;
-    setFormData((prev=>({...prev, categoryImage: update})))
+    // const update = {file, image_url: URL.createObjectURL(file)}
+    if(!file) return
+    setHandWrittenCategoryThumbnail(URL.createObjectURL(file))
+    // setFormData((prev=>({...prev, categoryImage: URL.createObjectURL(file)})))
     e.target.value=""
   }
 
@@ -125,11 +127,11 @@ const EditItem = ({itemId, selectedItem}) => {
     setFormData((prev)=>({...prev, thumbnails: prev.thumbnails.map((img, i)=>( i === index ? update : img))}))
   }
 
-  const handleRadio = (e, input, type)=>{
+  const handleRadio = (e, input, type, index)=>{
     if(type.includes('cat')){
         setFormData(prev=>({...prev, 
           category: input, 
-          categoryImage: categories[categories.findIndex((it)=> it.category_name === input)]?.image
+          categoryImage: categories[index]?.image
         }))
         setTimeout(() => {
           setViewCategoryModal(false)
@@ -181,6 +183,19 @@ const EditItem = ({itemId, selectedItem}) => {
     setSelectedInfosType(selectedInf)
   }
 
+  const handleCategoryRadio = () =>{
+      setViewCategoryModal(!isViewCategoryModal)
+      // setFormData((prev)=>({...prev, 
+      //   category: '', 
+      //   categoryImage: {}
+      // }))  
+  }
+
+  const catImageBySelectedCategory = ()=>{
+    const index = categories.findIndex((cat)=>cat.category_name === formData.category)
+    setFormData((prev)=>({...prev, categoryImage: categories[index]?.image}))
+  }
+ 
   const allCategories = async () =>{
     try {
       const response = await axios.get(`${API_URL}/categories`)
@@ -200,20 +215,20 @@ const EditItem = ({itemId, selectedItem}) => {
     }
   } 
 
-  const handleCategoryRadio = () =>{
-      setViewCategoryModal(!isViewCategoryModal)
-      // setFormData((prev)=>({...prev, 
-      //   category: '', 
-      //   categoryImage: {}
-      // }))  
+  const getThumbnails = async()=>{
+    try {
+      const response = await axios.get(`${API_URL}/thumbnails/developer/${itemId}`)  
+      setFormData((prev)=>({...prev, thumbnails: response.data}))
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  useEffect(()=>{
-    getInfos()
-  }, [itemId])
 
   useEffect(()=>{
     getDetails()
+    getThumbnails()
+    getInfos()  
   }, [itemId])
   
   useEffect(()=>{
@@ -234,6 +249,10 @@ const EditItem = ({itemId, selectedItem}) => {
         window.document.removeEventListener('mousedown', handle)
     })
     }, []) 
+
+    useEffect(()=>{
+      catImageBySelectedCategory()
+    },[formData.category])
    
 
   return (
@@ -287,61 +306,63 @@ const EditItem = ({itemId, selectedItem}) => {
             </div>
             <div className='flex flex-col lg:flex-row lg:items-center gap-1 w-full'>
               {/* {viewCat && ( */}
-                  <div className={`lg:flex-1 flex gap-2 flex-col`}>
-
-                    {!viewCat && (
-                    <div className={``}>
-                      <label className='w-full flex items-center '>
-                        <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category} onClick={()=>(handleCategoryRadio())} 
-                        className='w-full h-full border border-gray-500 cursor-pointer text-gray-500 px-1 rounded-sm'/>
-                      </label>
-                      <label className='flex items-center justify-center w-full'>
-                        <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
-                          {formData?.categoryImage ? (
-                            <img src={formData?.categoryImage} alt='category preview' className='object-cover h-full w-full'/>)
-                            :
-                          (<p className='text-center h-full flex items-center justify-center gap-1'><AlertCircle size={15} /><span>No category image found</span></p>)}
-                        </div>
-                          <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
-                      </label>
+              <div className={`lg:flex-1` }>
+                {!viewCat && (
+                <div className={`space-y-2`}>
+                  <label className='w-full flex items-center '>
+                    <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category} onClick={()=>(handleCategoryRadio())} 
+                    className='w-full h-full border border-gray-500 cursor-pointer text-gray-800 px-1 rounded-sm'/>
+                  </label>
+                  <label className='flex items-center justify-center w-full'>
+                    <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
+                      {formData?.categoryImage ? (
+                        <img src={`${BASE_URL}${formData?.categoryImage}`} alt={`${formData.category} preview`} className='object-cover h-full w-full'/>)
+                        :
+                      (<p className='text-center h-full flex items-center justify-center gap-1'>
+                        <AlertCircle size={15} /><span>No category image found</span>
+                      </p>)}
                     </div>
-                    )}
+                      {/* <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/> */}
+                  </label>
+                </div>
+                )}
 
-                  {viewCat && (
-                      <div>
-                      <label className='w-full flex items-center'>
-                        <textarea type='text' 
-                        className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
-                        placeholder='Custom name ...' value={formData?.category} onChange={(e)=>(setFormData((prev)=>({...prev, category: e.target.value})))}/>
-                      </label>
-                    <label className='flex items-center justify-center w-full'>
+              {viewCat && (
+                  <div className={`space-y-2`}>
+                  <label className='w-full flex items-center'>
+                    <input type='text' 
+                    className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
+                    placeholder='Custom name ...' value={handWrittenCategory} onChange={(e)=>(setHandWrittenCategory(e.target.value))}/>
+                  </label>
+                  <label className='flex items-center justify-center w-full'>
                       <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
-                        {formData?.categoryImage ? (<img src={formData?.categoryImage} alt='category preview' className='object-cover h-full w-full'/>):
+                        {handWrittenCategoryThumbnail ? (<img src={handWrittenCategoryThumbnail} alt='category preview' className='object-cover h-full w-full'/>):
                         (<p className='text-center h-full flex items-center justify-center gap-2'>
                           <Pointer size='20' />
                           <span>Select image</span></p>
                         )}
                       </div>
-                        <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
-                    </label>
-                      </div>
-                    )}
+                      <input type='file' accept='image/*' onChange={(e)=>(handleInsertCategoryImage(e))} className='hidden'/>
+                  </label>
                   </div>
+                )}
+              </div>
             </div>
             {isViewCategoryModal && (
-                <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-53'>
-                  <div className='bg-ed-500 h-full w-full flex justify-center relative'>
-                   <div ref={ref} className='absolute top-43 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
-                        {categories.map((cat, index)=>(
-                        <label key={cat.category_id} onClick={(e)=>(handleRadio(e, cat.category_name, 'cat'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
-                            <input
-                            type='radio' value={cat.category_name} name='category' required={index === 0}/>
-                            {cat.category_name}
-                        </label>
-                      ))}
-                    </div>
+              <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/5 transition-all duration-500 ease-in-out w-full h-screen z-53'>
+                <div className='bg-ed-500 h-full w-full flex justify-center relative'>
+                  <div ref={ref} className='absolute top-43 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
+                      {categories.map((cat, index)=>(
+                      <label key={cat.category_id} onClick={(e)=>(handleRadio(e, cat.category_name, 'cat', index))} 
+                        className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
+                          <input
+                          type='radio' value={cat.category_name} name='category' required={index === 0}/>
+                          {cat.category_name}
+                      </label>
+                    ))}
                   </div>
                 </div>
+              </div>
             )} 
           </div>
             {/* source */}
@@ -422,6 +443,18 @@ const EditItem = ({itemId, selectedItem}) => {
           </div>
           </div>
           ))}
+          <div className='flex items-center gap-5 p-2 justify-center'>
+            {formData.infos.length>0 && <div className='flex items-center justify-center text-blue-500'>
+            {formData.infos.length > startIndex &&
+              <button onClick={()=>(handleInfoMore())} className='flex gap-1 items-center justify-center p-2 bg-blue-500 text-white rounded-lg outline'>
+                  {displayNum !== startIndex ? 
+                  (<span className='flex gap-1 items-center justify-center'>Less <ChevronUp /></span>)
+                  : 
+                  (<span className='flex gap-1 items-center justify-center'>More <ChevronDown /></span>)}
+              </button>
+            }
+          </div>}
+          </div>
         </div>)}
 
         {/* new */}
@@ -437,7 +470,7 @@ const EditItem = ({itemId, selectedItem}) => {
           {newInfoData?.map((i, index)=>(
             <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
               <div className='flex justify-between px-2 p-1 text-sm'>
-                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{index+1}</p>
+                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{formData?.infos.length+index+1}</p>
                 <Trash onClick={()=>(handleNewDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
               </div>
          
@@ -474,22 +507,6 @@ const EditItem = ({itemId, selectedItem}) => {
         </div>)}
         </div>
 
-        {selectInfosType === 'old' && (
-        <div className='flex items-center gap-5 p-2 justify-center'>
-          {formData.infos.length>0 && <div className='flex items-center justify-center text-blue-500'>
-          {formData.infos.length > startIndex &&
-            <button onClick={()=>(handleInfoMore())} className='flex gap-1 items-center justify-center p-2 bg-blue-500 text-white rounded-lg outline'>
-                {displayNum !== startIndex ? 
-                (<span className='flex gap-1 items-center justify-center'>Less <ChevronUp /></span>)
-                : 
-                (<span className='flex gap-1 items-center justify-center'>More <ChevronDown /></span>)}
-            </button>
-          }
-        </div>}
-        </div>
-        )}
-
-
       </div>
 
 
@@ -508,16 +525,18 @@ const EditItem = ({itemId, selectedItem}) => {
             </label>          
           </div>
           <div className='flex border border-gray-200 p-1 gap-3 w-full m-1 h-60 overflow-x-auto'>
-            {formData?.thumbnails.length > 0 ? (
+            {formData?.thumbnails?.length > 0 ? (
               <div className='flex gap-2 p-1'>
-                {formData.thumbnails?.reverse().map((i, index)=>(
+                {formData.thumbnails?.map((i, index)=>(
                 <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
-                    <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} src={i?.image_url} alt='preview' className='w-full h-full object-cover border border-gray-200'/>
+                    <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} 
+                    src={`${BASE_URL}${i}`} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
+                    {console.log(`index: ${index}; value: ${i?.image}`)                    }
                     <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
                       <X onClick={()=>(handleDeleteImage(index))} size='25' className='text-red-500'/>
                       <label>
                         <Edit2 size='20' className='text-green-500'/>
-                      <input onChange={(e)=>(handleEditImage(e, index))} multiple type='file' accept='image/*' className='bg-red-500 hidden w-5' />
+                        <input onChange={(e)=>(handleEditImage(e, index))} multiple type='file' accept='image/*' className='bg-red-500 hidden w-5' />
                       </label>
                     </div>
                  </div>

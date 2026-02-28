@@ -110,7 +110,7 @@ const CreateCat = () => {
             )}
             </div>
         </div>
-        {viewImageModal && (<PreviewImage image={formData.image} setIsOpen={setViewImageModal} />)}
+        {viewImageModal && (<PreviewImage image={formData.image.image_url} setIsOpen={setViewImageModal} />)}
     </form>
   )
 }

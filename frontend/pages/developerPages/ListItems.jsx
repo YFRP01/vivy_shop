@@ -75,7 +75,7 @@ const ListItems = () => {
               className='flex gap-2 items-center justify-center p-a' >
                   <button className='outline-none text-start w-full'
                     onClick={()=>(setViewDetailsModal(true), setSelectedItem(item), setItemToViewDetails(item.item_id))}>
-                  <DevItemsCards item={item} />
+                      <DevItemsCards item={item} />
                   </button>
                   <Trash2 onClick={()=>(setItemToDeleteId(item.item_id), deleteItem())} className='text-red-500 fill-red-500 hover:text-red-800 hover:fill-red-800  trannsition-all duration-100 ease-in-out ' />
               </div>
@@ -89,7 +89,7 @@ const ListItems = () => {
                   <XCircle className='cursor-pointer w-7 h-7' onClick={()=>(setViewDetailsModal(false))} />
                 </div>
                 <div className='overflow-y-auto h-full'>
-                    <EditItem setViewDetailsModal={setViewDetailsModal} selectedItem={selectedItem} itemId={itemToViewDetails} />  
+                    <EditItem setViewDetailsModal={setViewDetailsModal} selectedItem={selectedItem} itemId={itemToViewDetails}/>  
                 </div>
               </div>
           </div>

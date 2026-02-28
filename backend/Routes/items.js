@@ -81,7 +81,7 @@ router.get("/developer", async (req, res)=>{
         SELECT i.item_id, i.name, i.description, s.source_name AS source, 
         i.created_at::DATE AS date,
         i.created_at::TIME AS time,
-        (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS image,
+        (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS images,
         (SELECT cat.category_name FROM categories cat WHERE cat.category_id =  i.category_id) AS category
         FROM items i LEFT JOIN sources s ON s.source_id = i.source_id `;
     if(search){

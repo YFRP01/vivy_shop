@@ -13,6 +13,16 @@ router.get("/", async(req, res)=>{
     }
 })
 
+router.get("/developer/:item_id", async(req, res)=>{
+    try {
+        const {item_id} = req.params
+        const response = await pool.query(`SELECT * FROM thumbnails WHERE item_id=$1`, [item_id])
+        res.status(200).json(response.rows)        
+    } catch (error) {
+        res.status(500).json(`Unable to get thumbnails of the item: ${error.message}`)
+    }
+})
+
 router.post("/developer", upload.single("image"), async(req, res)=>{
     try {
         const {item_id} = req.body
