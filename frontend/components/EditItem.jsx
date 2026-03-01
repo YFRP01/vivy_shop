@@ -10,6 +10,7 @@ const EditItem = ({itemId, selectedItem}) => {
   const ref = useRef()
   const startIndex = 1
   const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState('')
   const [isViewCategoryModal, setViewCategoryModal] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
   const [isPreviewCard, setIsPreviewCard] = useState(false)
@@ -22,13 +23,13 @@ const EditItem = ({itemId, selectedItem}) => {
   const [selectInfosType, setSelectedInfosType] = useState('new')
   const [backUpData, setBackupData] = useState(null)
   const [formData, setFormData] = useState({
-    name: selectedItem.name,
-    description: selectedItem.description,
-    category: selectedItem.category,
-    source: selectedItem.source,
+    name: '',
+    description: '',
+    category: '',
+    source: '',
     infos: [],
     thumbnails: [],
-    categoryImage: categories[categories.findIndex((it)=> it.category_name === selectedItem.category)]?.image
+    categoryImage: ''
   })
   const [newInfoData, setNewInfoData] = useState([
     {
@@ -38,44 +39,13 @@ const EditItem = ({itemId, selectedItem}) => {
     }
   ])
 
-  const getDetails = async()=>{
-    try {
-        const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
-        const temp = response.data[0]
-        const newData = {
-          name: temp.name,
-          description: temp.description,
-          category: temp.category,
-          source: temp.source,
-          infos: temp.infos,
-          thumbnails: temp.thumbnails,
-          category_image: temp.category_image
-        }
-        setFormData(newData)
-        setBackupData(newData)
-    } catch (error) {
-        console.log(`${error.message}`);
-    }
-  }
-
-  console.log(backUpData);
-
   const resetForm = ()=>{
-    setFormData({
-    name: selectedItem.name,
-    description: selectedItem.description,
-    category: selectedItem.category,
-    source: selectedItem.source,
-    infos: backUpData?.infos,
-    thumbnails: [],
-    categoryImage: categories[categories.findIndex((it)=> it.category_name === selectedItem.category)]?.image
-    })
+    setFormData(JSON.parse(JSON.stringify(backUpData)))
     setNewInfoData([{qty: "", cost: "", details: ""}])
     setViewCategoryModal(false)
     setHandWrittenCategory('')
     setHandWrittenCategoryThumbnail('')
     setInfoError('')
-    setSelectedInfosType('new')
     setViewSource(false)
     setIsPreviewCard(false)
     setViewCat(false)
@@ -110,7 +80,7 @@ const EditItem = ({itemId, selectedItem}) => {
   }
 
   const handleInsertImage = (e)=>{
-    const files = e.target.files;
+    const files = Array.from(e.target.files || []);
     const update = []
     if(!files) return
     for(let i=0; i < files.length; i++){
@@ -122,10 +92,8 @@ const EditItem = ({itemId, selectedItem}) => {
 
   const handleInsertCategoryImage = (e)=>{
     const file = e.target.files[0]
-    // const update = {file, image_url: URL.createObjectURL(file)}
     if(!file) return
     setHandWrittenCategoryThumbnail(URL.createObjectURL(file))
-    // setFormData((prev=>({...prev, categoryImage: URL.createObjectURL(file)})))
     e.target.value=""
   }
 
@@ -171,7 +139,7 @@ const EditItem = ({itemId, selectedItem}) => {
   }
 
   const handleDelInfo = (index) =>{
-    const update = formData.infos.filter((_, i)=> i !== index)
+    const update = formData?.infos.filter((_, i)=> i !== index)
     setFormData(prev=>({...prev, infos: update}))
     setInfoError('')
   }
@@ -188,7 +156,7 @@ const EditItem = ({itemId, selectedItem}) => {
   }
 
   const handleInfoMore = () =>{
-    if(displayNum === startIndex) setDisplayNum(formData.infos.length); 
+    if(displayNum === startIndex) setDisplayNum(formData?.infos.length); 
     else setDisplayNum(startIndex);      
   }
 
@@ -198,55 +166,53 @@ const EditItem = ({itemId, selectedItem}) => {
 
   const handleCategoryRadio = () =>{
       setViewCategoryModal(!isViewCategoryModal)
-      // setFormData((prev)=>({...prev, 
-      //   category: '', 
-      //   categoryImage: {}
-      // }))  
   }
 
-  const catImageBySelectedCategory = ()=>{
-    const index = categories.findIndex((cat)=>cat.category_name === formData.category)
-    setFormData((prev)=>({...prev, categoryImage: categories[index]?.image}))
+  const getDetails = async()=>{
+    setLoading("Loading item's details")
+    try {
+        const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
+        const temp = response.data[0]
+        const newData = {
+          name: temp.name,
+          description: temp.description,
+          category: temp.category,
+          source: temp.source,
+          infos: temp.infos || [],
+          thumbnails: temp.thumbnails || [],
+          category_image: temp.category_image
+        }        
+        setFormData(JSON.parse(JSON.stringify(newData)))
+        setBackupData(JSON.parse(JSON.stringify(newData)))
+    } catch (error) {
+        console.log(`${error.message}`);
+    }
+    finally{
+      setLoading('')
+    }
   }
- 
+
   const allCategories = async () =>{
+    setLoading('')
     try {
       const response = await axios.get(`${API_URL}/categories`)
       setCategories(response.data)
     } catch (error) {
       console.log(`Unable to get all categories: ${error.message}`);
     }
-  }
-
-  const getInfos = async()=>{
-    try {
-      const response = await axios.get(`${API_URL}/infos/${itemId}`)
-      const holdInfos = response.data
-      setFormData((prev)=>({...prev, infos: holdInfos}))
-    } catch (error) {
-      console.log(`Unable to get the infos ${error.message}`);
-    }
-  } 
-
-  const getThumbnails = async()=>{
-    try {
-      const response = await axios.get(`${API_URL}/thumbnails/developer/${itemId}`)  
-      setFormData((prev)=>({...prev, thumbnails: response.data}))
-    } catch (error) {
-      console.log(error);
+    finally{
+      setLoading('')
     }
   }
-
 
   useEffect(()=>{
-    getDetails()
-    getThumbnails()
-    getInfos()  
-  }, [itemId])
+    if(itemId){
+        getDetails()
+    }
+  },[itemId])
   
   useEffect(()=>{
-    allCategories()
-    formData.infos
+        allCategories()
   }, [])
 
   useEffect(()=>{
@@ -262,10 +228,6 @@ const EditItem = ({itemId, selectedItem}) => {
         window.document.removeEventListener('mousedown', handle)
     })
     }, []) 
-
-    useEffect(()=>{
-      catImageBySelectedCategory()
-    },[formData.category])
    
 
   return (
@@ -296,7 +258,7 @@ const EditItem = ({itemId, selectedItem}) => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Description</h2>
             <textarea 
-            onKeyDown={(e)=>(handleShow(e, 'Description', formData.description))} 
+            onKeyDown={(e)=>(handleShow(e, 'Description', formData?.description))} 
             value={formData?.description} placeholder={selectedItem.description} onChange={((e)=>(setFormData((prev)=>({...prev, description: e.target.value}))))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
@@ -328,7 +290,7 @@ const EditItem = ({itemId, selectedItem}) => {
                   <label className='flex items-center justify-center w-full'>
                     <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
                       {formData?.categoryImage ? (
-                        <img src={`${BASE_URL}${formData?.categoryImage}`} alt={`${formData.category} preview`} className='object-cover h-full w-full'/>)
+                        <img src={`${BASE_URL}${formData?.categoryImage}`} alt={`${formData?.category} preview`} className='object-cover h-full w-full'/>)
                         :
                       (<p className='text-center h-full flex items-center justify-center gap-1'>
                         <AlertCircle size={15} /><span>No category image found</span>
@@ -382,15 +344,15 @@ const EditItem = ({itemId, selectedItem}) => {
             <div className='flex gap-2'>
               <p className='font-medium'>Source</p>
               <button onClick={()=>(setViewSource(!isViewSource))} className='border border-gray-500 min-w-30 cursor-pointer text-gray-500 px-1 rounded-sm'>
-                {formData.source? formData.source : selectedItem.source}
+                {formData?.source? formData?.source : selectedItem?.source}
               </button>
             </div>
             {isViewSource && (
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/10 transition-all duration-500 ease-in-out w-full h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
                    <div ref={ref} className='absolute top-71 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
-                        {sources?.map((s)=>(
-                        <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
+                        {sources?.map((s, index)=>(
+                        <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source', index))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
                             type='radio' onChange={(e)=>(setFormData((prev)=>({...prev, source:e.target.value})))} value={s.name} name='source' />
                             {s.name}
@@ -411,7 +373,7 @@ const EditItem = ({itemId, selectedItem}) => {
       <div>
       <div className='flex flex-col'>
           <div className='text-blue-500'>
-              <p>Infos (<span className='text-green-500'>{formData?.infos?.length}</span>)</p>
+              <p>Infos (<span className='text-green-500'>{formData?.infos?.length || 0}</span>)</p>
               <div className='flex text-sm '>
                     <p onClick={()=>(handleInfoType('new'))} className={`${selectInfosType === 'new' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Add</p>
                     <p onClick={()=>(handleInfoType('old'))} className={`${selectInfosType === 'old' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Ancient</p>
@@ -456,8 +418,8 @@ const EditItem = ({itemId, selectedItem}) => {
           </div>
           ))}
           <div className='flex items-center gap-5 p-2 justify-center'>
-            {formData.infos?.length>0 && <div className='flex items-center justify-center text-blue-500'>
-            {formData.infos?.length > startIndex &&
+            {formData?.infos?.length>0 && <div className='flex items-center justify-center text-blue-500'>
+            {formData?.infos?.length > startIndex &&
               <button onClick={()=>(handleInfoMore())} className='flex gap-1 items-center justify-center p-2 bg-blue-500 text-white rounded-lg outline'>
                   {displayNum !== startIndex ? 
                   (<span className='flex gap-1 items-center justify-center'>Less <ChevronUp /></span>)
@@ -482,7 +444,7 @@ const EditItem = ({itemId, selectedItem}) => {
           {newInfoData?.map((i, index)=>(
             <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
               <div className='flex justify-between px-2 p-1 text-sm'>
-                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{formData?.infos?.length+index+1}</p>
+                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{formData?.infos?.length+index+1 || 0}</p>
                 <Trash onClick={()=>(handleNewDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
               </div>
          
@@ -528,7 +490,7 @@ const EditItem = ({itemId, selectedItem}) => {
 
       <div className='w-full'>
           <div className='flex items-center justify-between '>
-            <p className='text-blue-500'>Thumbnails (<span className='text-green-500'>{formData?.thumbnails.length})</span> <span className='text-red-500'>*</span></p>
+            <p className='text-blue-500'>Thumbnails (<span className='text-green-500'>{formData?.thumbnails?.length || 0})</span> <span className='text-red-500'>*</span></p>
             <label
               className='flex flex-col items-center justify-center rounded-md text-green-500'>
                   <input type='file' multiple accept='image/*' className='hidden'
@@ -539,7 +501,7 @@ const EditItem = ({itemId, selectedItem}) => {
           <div className='flex border border-gray-200 p-1 gap-3 w-full m-1 h-60 overflow-x-auto'>
             {formData?.thumbnails?.length > 0 ? (
               <div className='flex gap-2 p-1'>
-                {formData.thumbnails?.map((i, index)=>(
+                {formData?.thumbnails?.map((i, index)=>(
                 <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
                     <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} 
                     src={`${BASE_URL}${i}`} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
@@ -560,7 +522,7 @@ const EditItem = ({itemId, selectedItem}) => {
             </div>)}
           </div>
         </div>
-          {isPreviewCard && formData.thumbnails[selectedImageIndex] && <PreviewImage image={formData.thumbnails[selectedImageIndex]} setIsOpen={setIsPreviewCard}/>}  
+          {isPreviewCard && formData?.thumbnails[selectedImageIndex] && <PreviewImage image={formData?.thumbnails[selectedImageIndex]} setIsOpen={setIsPreviewCard}/>}  
     </div>
   )
 }

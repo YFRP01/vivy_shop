@@ -272,7 +272,7 @@ router.get("/developer/:item_id", async(req, res)=>{
     try {
       const {item_id} = req.params
       const response = await pool.query(`
-        SELECT i.item_id, i.name, i.description, i.source,
+        SELECT i.item_id, i.name, i.description, s.source_name AS source,
         cat.category_name AS category, cat.image AS category_image,
         (SELECT json_agg(
           json_build_object(
@@ -287,12 +287,12 @@ router.get("/developer/:item_id", async(req, res)=>{
               'cost', th.image
             )
           )) AS thumbnails
-        FROM items i 
+        FROM items i JOIN sources s ON s.source_id = i.source_id 
         JOIN categories cat ON cat.category_id = i.category_id
         JOIN infos inf ON inf.item_id = i.item_id
         JOIN thumbnails th ON th.item_id = i.item_id
         WHERE i.item_id = $1
-        GROUP BY i.item_id, cat.category_id`,[item_id])
+        GROUP BY i.item_id, cat.category_id, s.source_id `,[item_id])
 
         res.status(200).json(response.rows)
     } catch (error) {
