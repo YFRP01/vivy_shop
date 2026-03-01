@@ -16,11 +16,11 @@ const EditItem = ({itemId, selectedItem}) => {
   const [displayNum, setDisplayNum] = useState(startIndex)
   const [viewCat, setViewCat] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
-  const [backUpData, setBackupData] = useState(null)
   const [handWrittenCategory, setHandWrittenCategory] = useState('')
   const [handWrittenCategoryThumbnail, setHandWrittenCategoryThumbnail] = useState('')
   const [infoError, setInfoError] = useState('')
   const [selectInfosType, setSelectedInfosType] = useState('new')
+  const [backUpData, setBackupData] = useState(null)
   const [formData, setFormData] = useState({
     name: selectedItem.name,
     description: selectedItem.description,
@@ -58,18 +58,31 @@ const EditItem = ({itemId, selectedItem}) => {
     }
   }
 
+  console.log(backUpData);
+
   const resetForm = ()=>{
-    if(backUpData){
-      setFormData(backUpData)
-    }
-    setCategories([])
+    setFormData({
+    name: selectedItem.name,
+    description: selectedItem.description,
+    category: selectedItem.category,
+    source: selectedItem.source,
+    infos: backUpData?.infos,
+    thumbnails: [],
+    categoryImage: categories[categories.findIndex((it)=> it.category_name === selectedItem.category)]?.image
+    })
+    setNewInfoData([{qty: "", cost: "", details: ""}])
     setViewCategoryModal(false)
+    setHandWrittenCategory('')
+    setHandWrittenCategoryThumbnail('')
+    setInfoError('')
+    setSelectedInfosType('new')
     setViewSource(false)
     setIsPreviewCard(false)
     setViewCat(false)
     setSelectedImageIndex(null)
     setDisplayNum(startIndex)
   }
+
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
             console.log(value, ':', input);
@@ -266,10 +279,9 @@ const EditItem = ({itemId, selectedItem}) => {
             <div className='w-full flex justify-between items-center'>
               <p className='text-blue-500'>Item</p>
               <div className='w-full font-medium text-sm text-white flex justify-end items-center gap-3 px-2 py-1'>
-                <button onClick={()=>(resetForm())} className='bg-orange-400 border-none w-20 h-7 md:w-25 md:h-8 rounded-md cursor-pointer'>Reset</button>
-                <button onClick={()=>(resetForm())} className='bg-green-500 border-none w-20 h-7 md:w-25 md:h-8 p-1 rounded-md cursor-pointer'>Submit</button>
+                <button onClick={resetForm} className='bg-orange-400 border-none w-20 h-7 md:w-25 md:h-8 rounded-md cursor-pointer'>Reset</button>
+                <button onClick={resetForm} className='bg-green-500 border-none w-20 h-7 md:w-25 md:h-8 p-1 rounded-md cursor-pointer'>Submit</button>
               </div>
-
             </div>
             {/* name */}
           <div className='flex gap-2 p-1'>
@@ -399,7 +411,7 @@ const EditItem = ({itemId, selectedItem}) => {
       <div>
       <div className='flex flex-col'>
           <div className='text-blue-500'>
-              <p>Infos (<span className='text-green-500'>{formData?.infos.length}</span>)</p>
+              <p>Infos (<span className='text-green-500'>{formData?.infos?.length}</span>)</p>
               <div className='flex text-sm '>
                     <p onClick={()=>(handleInfoType('new'))} className={`${selectInfosType === 'new' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Add</p>
                     <p onClick={()=>(handleInfoType('old'))} className={`${selectInfosType === 'old' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Ancient</p>
@@ -410,7 +422,7 @@ const EditItem = ({itemId, selectedItem}) => {
           
         {selectInfosType === 'old' &&
         (<div>
-          {formData?.infos.slice(0,displayNum).map((i, index)=>(
+          {formData?.infos?.slice(0,displayNum).map((i, index)=>(
             <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
               <div className='flex justify-between px-2 p-1 text-sm'>
                 <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{index+1}</p>
@@ -444,8 +456,8 @@ const EditItem = ({itemId, selectedItem}) => {
           </div>
           ))}
           <div className='flex items-center gap-5 p-2 justify-center'>
-            {formData.infos.length>0 && <div className='flex items-center justify-center text-blue-500'>
-            {formData.infos.length > startIndex &&
+            {formData.infos?.length>0 && <div className='flex items-center justify-center text-blue-500'>
+            {formData.infos?.length > startIndex &&
               <button onClick={()=>(handleInfoMore())} className='flex gap-1 items-center justify-center p-2 bg-blue-500 text-white rounded-lg outline'>
                   {displayNum !== startIndex ? 
                   (<span className='flex gap-1 items-center justify-center'>Less <ChevronUp /></span>)
@@ -470,7 +482,7 @@ const EditItem = ({itemId, selectedItem}) => {
           {newInfoData?.map((i, index)=>(
             <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
               <div className='flex justify-between px-2 p-1 text-sm'>
-                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{formData?.infos.length+index+1}</p>
+                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{formData?.infos?.length+index+1}</p>
                 <Trash onClick={()=>(handleNewDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
               </div>
          
@@ -531,7 +543,6 @@ const EditItem = ({itemId, selectedItem}) => {
                 <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
                     <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} 
                     src={`${BASE_URL}${i}`} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
-                    {console.log(`index: ${index}; value: ${i?.image}`)                    }
                     <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
                       <X onClick={()=>(handleDeleteImage(index))} size='25' className='text-red-500'/>
                       <label>
