@@ -19,18 +19,18 @@ const EditItem = ({itemId, selectedItem}) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
   const [handWrittenCategory, setHandWrittenCategory] = useState('')
   const [handWrittenCategoryThumbnail, setHandWrittenCategoryThumbnail] = useState('')
-  const [infoError, setInfoError] = useState('')
+  const [errorMessage, setErrorMessage] = useState({info:"", thumbnail: "", item: ""})
   const [selectInfosType, setSelectedInfosType] = useState('new')
   const [backUpData, setBackupData] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    category: '',
+    category: {id: "", name: "", image: ""},
     source: '',
     infos: [],
-    thumbnails: [],
-    categoryImage: ''
+    thumbnails: []
   })
+  
   const [newInfoData, setNewInfoData] = useState([
     {
       qty: "",
@@ -45,12 +45,24 @@ const EditItem = ({itemId, selectedItem}) => {
     setViewCategoryModal(false)
     setHandWrittenCategory('')
     setHandWrittenCategoryThumbnail('')
-    setInfoError('')
+    setErrorMessage({info:"", thumbnail: "", item: ""})
     setViewSource(false)
     setIsPreviewCard(false)
     setViewCat(false)
     setSelectedImageIndex(null)
     setDisplayNum(startIndex)
+  }
+
+  const SubmitForm = ()=>{
+    if(viewCat) {
+        if(handWrittenCategory.trim() && handWrittenCategoryThumbnail) {
+          createCategory(handWrittenCategory, handWrittenCategoryThumbnail)
+        }
+        else setErrorMessage(prev=>({...prev, item: "Empty category fields detected for creation"}))
+    }
+    else{
+        createCategory(formData?.category.name, formData?.category.image)
+    }
   }
 
   const handleShow = (e, value, input)=>{
@@ -93,7 +105,7 @@ const EditItem = ({itemId, selectedItem}) => {
   const handleInsertCategoryImage = (e)=>{
     const file = e.target.files[0]
     if(!file) return
-    setHandWrittenCategoryThumbnail(URL.createObjectURL(file))
+    setHandWrittenCategoryThumbnail(file)
     e.target.value=""
   }
 
@@ -111,8 +123,7 @@ const EditItem = ({itemId, selectedItem}) => {
   const handleRadio = (e, input, type, index)=>{
     if(type.includes('cat')){
         setFormData(prev=>({...prev, 
-          category: input, 
-          categoryImage: categories[index]?.image
+          category: {...prev, name: input, image: categories[index]?.image}, 
         }))
         setTimeout(() => {
           setViewCategoryModal(false)
@@ -133,25 +144,25 @@ const EditItem = ({itemId, selectedItem}) => {
   const addNewBlock = ()=>{
     if(newInfoData[newInfoData.length-1]?.cost && newInfoData[newInfoData.length-1]?.details && newInfoData[newInfoData.length-1]?.qty){
         setNewInfoData((prev)=>([...prev, {qty: "", cost: "", details: ""}]))
-        setInfoError('')
+        setErrorMessage({info:"", thumbnail: "", item: ""})
     }
-    else setInfoError('Empty field found!')
+    else setErrorMessage((prev)=>({...prev, info: "Empty field found!"}))
   }
 
   const handleDelInfo = (index) =>{
     const update = formData?.infos.filter((_, i)=> i !== index)
     setFormData(prev=>({...prev, infos: update}))
-    setInfoError('')
+    setErrorMessage({info:"", thumbnail: "", item: ""})
   }
 
   const handleNewDelInfo = (index) =>{
     const updateNew = newInfoData.filter((_, i)=> i !== index)
     if(newInfoData.length < 2){
-      setInfoError(`Fill this info or leave it empty`)
+      setErrorMessage(prev=>({...prev, info: "Fill this info or leave it empty"}))
     }
     else {
       setNewInfoData(updateNew)
-      setInfoError('')
+      setErrorMessage({info:"", thumbnail: "", item: ""})
     }
   }
 
@@ -180,7 +191,7 @@ const EditItem = ({itemId, selectedItem}) => {
           source: temp.source,
           infos: temp.infos || [],
           thumbnails: temp.thumbnails || [],
-          category_image: temp.category_image
+          categoryImage: temp.category_image
         }        
         setFormData(JSON.parse(JSON.stringify(newData)))
         setBackupData(JSON.parse(JSON.stringify(newData)))
@@ -199,6 +210,21 @@ const EditItem = ({itemId, selectedItem}) => {
       setCategories(response.data)
     } catch (error) {
       console.log(`Unable to get all categories: ${error.message}`);
+    }
+    finally{
+      setLoading('')
+    }
+  }
+
+  const createCategory = async (category_name, image) =>{
+    setLoading('loading')
+    try {
+      const response = await axios.post(`${API_URL}/developer`, { category_name, image }) 
+      setFormData(prev=>({...prev, category: {id: response.data.category_id, name: response.data.category_name, image: response.data.image}}))     
+      setCategories(prev=>([...prev, response.data]))
+    } catch (error) {
+      console.log(error);
+      setErrorMessage(prev=>({...prev, item: `Unable to create the new category: ${error}`}))
     }
     finally{
       setLoading('')
@@ -242,7 +268,7 @@ const EditItem = ({itemId, selectedItem}) => {
               <p className='text-blue-500'>Item</p>
               <div className='w-full font-medium text-sm text-white flex justify-end items-center gap-3 px-2 py-1'>
                 <button onClick={resetForm} className='bg-orange-400 border-none w-20 h-7 md:w-25 md:h-8 rounded-md cursor-pointer'>Reset</button>
-                <button onClick={resetForm} className='bg-green-500 border-none w-20 h-7 md:w-25 md:h-8 p-1 rounded-md cursor-pointer'>Submit</button>
+                <button onClick={SubmitForm} className='bg-green-500 border-none w-20 h-7 md:w-25 md:h-8 p-1 rounded-md cursor-pointer'>Submit</button>
               </div>
             </div>
             {/* name */}
@@ -274,7 +300,7 @@ const EditItem = ({itemId, selectedItem}) => {
                 <label className='flex items-center gap-1'>
                     <input type='checkbox' name='whichCat' 
                     onChange={(e)=>(setViewCat(e.target.checked))} checked={viewCat} className='cursor-pointer'/>
-                    Default
+                    Create
                 </label> 
               </div>
             </div>
@@ -284,13 +310,13 @@ const EditItem = ({itemId, selectedItem}) => {
                 {!viewCat && (
                 <div className={`space-y-2`}>
                   <label className='w-full flex items-center '>
-                    <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category} onClick={()=>(handleCategoryRadio())} 
+                    <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category.name} onClick={()=>(handleCategoryRadio())} 
                     className='w-full h-full border border-gray-500 cursor-pointer text-gray-800 px-1 rounded-sm'/>
                   </label>
                   <label className='flex items-center justify-center w-full'>
                     <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
-                      {formData?.categoryImage ? (
-                        <img src={`${BASE_URL}${formData?.categoryImage}`} alt={`${formData?.category} preview`} className='object-cover h-full w-full'/>)
+                      {formData?.category?.image ? (
+                        <img src={`${BASE_URL}${formData?.category?.image}`} alt={`${formData?.category?.name} preview`} className='object-cover h-full w-full'/>)
                         :
                       (<p className='text-center h-full flex items-center justify-center gap-1'>
                         <AlertCircle size={15} /><span>No category image found</span>
@@ -435,10 +461,10 @@ const EditItem = ({itemId, selectedItem}) => {
 
         {selectInfosType === 'new' &&
         (<div className='space-y-2 py-2'>
-          {infoError && (
+          {errorMessage.info && (
             <div className='bg-red-50 text-red-500 flex gap-1 items-center justify-center transition-all duration-200 ease-in-out '>
                 <AlertCircle className='' size={15}/>
-                <p className='text-center'>{infoError}</p>
+                <p className='text-center'>{errorMessage.info}</p>
             </div>          
           )}
           {newInfoData?.map((i, index)=>(
