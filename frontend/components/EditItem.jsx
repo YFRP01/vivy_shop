@@ -11,6 +11,7 @@ const EditItem = ({itemId, selectedItem}) => {
   const startIndex = 1
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState('')
+  const [errorForm, setErrorForm] = useState(null)
   const [isViewCategoryModal, setViewCategoryModal] = useState(false)
   const [isViewSource, setViewSource] = useState(false)
   const [isPreviewCard, setIsPreviewCard] = useState(false)
@@ -51,6 +52,7 @@ const EditItem = ({itemId, selectedItem}) => {
     setViewCat(false)
     setSelectedImageIndex(null)
     setDisplayNum(startIndex)
+    setErrorForm(null)
   }
 
   const SubmitForm = ()=>{
@@ -63,6 +65,7 @@ const EditItem = ({itemId, selectedItem}) => {
     else{
         createCategory(formData?.category.name, formData?.category.image)
     }
+    submitItem()
   }
 
   const handleShow = (e, value, input)=>{
@@ -96,7 +99,7 @@ const EditItem = ({itemId, selectedItem}) => {
     const update = []
     if(!files) return
     for(let i=0; i < files.length; i++){
-        update.push(URL.createObjectURL(files[i]))
+        update.push({image_id:"", image: URL.createObjectURL(files[i]), file: files[i]})
     } 
     setFormData((prev)=>({...prev, thumbnails: [...prev.thumbnails, ...update]}))
     e.target.value=""
@@ -116,7 +119,7 @@ const EditItem = ({itemId, selectedItem}) => {
   const handleEditImage = (e, index)=>{
     const file= e.target.files[0]
     if(!file) return;
-    const update = {image_url: URL.createObjectURL(file), file}
+    const update = {image_id:"", image: URL.createObjectURL(file), file}  
     setFormData((prev)=>({...prev, thumbnails: prev.thumbnails.map((img, i)=>( i === index ? update : img))}))
   }
 
@@ -191,7 +194,6 @@ const EditItem = ({itemId, selectedItem}) => {
           source: temp.source,
           infos: temp.infos || [],
           thumbnails: temp.thumbnails || [],
-          categoryImage: temp.category_image
         }        
         setFormData(JSON.parse(JSON.stringify(newData)))
         setBackupData(JSON.parse(JSON.stringify(newData)))
@@ -216,18 +218,12 @@ const EditItem = ({itemId, selectedItem}) => {
     }
   }
 
-  const createCategory = async (category_name, image) =>{
-    setLoading('loading')
+  const submitItem = async () =>{
     try {
-      const response = await axios.post(`${API_URL}/developer`, { category_name, image }) 
-      setFormData(prev=>({...prev, category: {id: response.data.category_id, name: response.data.category_name, image: response.data.image}}))     
-      setCategories(prev=>([...prev, response.data]))
+      const response = await axios.put(`${API_URL}/developer/full/${itemId}`)
+      setErrorForm(response.data)
     } catch (error) {
-      console.log(error);
-      setErrorMessage(prev=>({...prev, item: `Unable to create the new category: ${error}`}))
-    }
-    finally{
-      setLoading('')
+      console.log(error)
     }
   }
 
@@ -259,6 +255,9 @@ const EditItem = ({itemId, selectedItem}) => {
   return (
     <div className='flex flex-col h-full gap-2 w-full px-2 md:px-30 lg:px-30 xl:px-40'>
 
+      {errorForm && (<div className={` font-bold text-center ${errorForm?.status? 'bg-green-100 text-green-500':'text-red-500 bg-red-100'}`}>
+        {errorForm?.message}
+      </div>)}
       {/*-----------------------------------------
         items
       -----------------------------------------*/}
@@ -314,7 +313,7 @@ const EditItem = ({itemId, selectedItem}) => {
                     className='w-full h-full border border-gray-500 cursor-pointer text-gray-800 px-1 rounded-sm'/>
                   </label>
                   <label className='flex items-center justify-center w-full'>
-                    <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
+                    <div className='h-20 lg:h-30 w-full rounded-md border text-gray-500 text-sm border-gray-300'>
                       {formData?.category?.image ? (
                         <img src={`${BASE_URL}${formData?.category?.image}`} alt={`${formData?.category?.name} preview`} className='object-cover h-full w-full'/>)
                         :
@@ -530,7 +529,7 @@ const EditItem = ({itemId, selectedItem}) => {
                 {formData?.thumbnails?.map((i, index)=>(
                 <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
                     <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} 
-                    src={`${BASE_URL}${i}`} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
+                    src={i?.image_id ? `${BASE_URL}/${i?.image}` : i?.image} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
                     <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
                       <X onClick={()=>(handleDeleteImage(index))} size='25' className='text-red-500'/>
                       <label>
@@ -548,7 +547,7 @@ const EditItem = ({itemId, selectedItem}) => {
             </div>)}
           </div>
         </div>
-          {isPreviewCard && formData?.thumbnails[selectedImageIndex] && <PreviewImage image={formData?.thumbnails[selectedImageIndex]} setIsOpen={setIsPreviewCard}/>}  
+          {isPreviewCard && formData?.thumbnails[selectedImageIndex]?.image && <PreviewImage image={formData?.thumbnails[selectedImageIndex]?.image} setIsOpen={setIsPreviewCard}/>}  
     </div>
   )
 }

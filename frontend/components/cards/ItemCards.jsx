@@ -64,18 +64,18 @@ const ItemCards = ({item}) => {
         </div>
         <div onClick={()=>(navigate(`/item/${item.item_id}`))} className='flex-2 px-2 mt-4 relative'>
             <div className='p-1 break-all'>
-                <h1 className='font-bold flex flex-wrap text-base md:text-md text-black leading-tight'>{item.name.slice(0,39)}{item.name.length > 39 && '...'}</h1>
-                <p className='text-sm md:text-md text-[#374151] font-normal leading-snug line-clamp-2'>{item.info.details.slice(0,70)}{item.info.details.length > 70 && '...'}</p>
+                <h1 className='font-bold flex flex-wrap text-base md:text-md text-black leading-tight'>{item.name?.slice(0,39)}{item.name?.length > 39 && '...'}</h1>
+                <p className='text-sm md:text-md text-[#374151] font-normal leading-snug line-clamp-2'>{item.info?.details?.slice(0,70)}{item.info?.details?.length > 70 && '...'}</p>
             </div>
         <div className='h-fit flex items-end '>
             <div className='flex overflow-hidden  items-end max-md:flex-wrap font-sans text-[#0f172a] font-medium'>
                 <span className='flex items-center px-1 '>
-                    <span className='text-md lg:text-lg font-bold text-gray-700 flex items-end'>{formatPrice(item.info.cost)}</span>
+                    <span className='text-md lg:text-lg font-bold text-gray-700 flex items-end'>{formatPrice(item.info?.cost)}</span>
                     <JapaneseYen className='w-4 h-4' /> 
                 </span>
                 <span className='flex gap-1 h-full items-end md:text-[15px] text-[10px]'>
                     <span>/</span>
-                <span className='flex '>{item.info.qty } qt.</span>
+                <span className='flex '>{item.info?.qty } qt.</span>
                 </span>
             </div>
         </div>
