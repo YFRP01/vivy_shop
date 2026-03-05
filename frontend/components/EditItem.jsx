@@ -18,55 +18,29 @@ const EditItem = ({itemId, selectedItem}) => {
   const [displayNum, setDisplayNum] = useState(startIndex)
   const [viewCat, setViewCat] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(null)
-  const [handWrittenCategory, setHandWrittenCategory] = useState('')
+  const [handWrittenCategoryName, setHandWrittenCategoryName] = useState('')
   const [handWrittenCategoryThumbnail, setHandWrittenCategoryThumbnail] = useState('')
   const [errorMessage, setErrorMessage] = useState({info:"", thumbnail: "", item: ""})
   const [selectInfosType, setSelectedInfosType] = useState('new')
-  const [backUpData, setBackupData] = useState(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: {id: "", name: "", image: ""},
-    source: '',
-    infos: [],
-    thumbnails: []
+  const [firstHoldData] = useState({
+    name: selectedItem?.name || '',
+    description: selectedItem?.description || '',
+    category: selectedItem?.category || '',
+    source: selectedItem?.source || null,
+    infos: selectedItem?.infos || [],
+    thumbnails: selectedItem?.thumbnails || []
   })
+  const [backUpData] = useState(JSON.parse(JSON.stringify(firstHoldData)))
+  const [formData, setFormData] = useState(JSON.parse(JSON.stringify(firstHoldData)))
   
   const [newInfoData, setNewInfoData] = useState([
     {
+      id: "",
       qty: "",
       cost: "",
       details: ""
     }
   ])
-
-  const resetForm = ()=>{
-    setFormData(JSON.parse(JSON.stringify(backUpData)))
-    setNewInfoData([{qty: "", cost: "", details: ""}])
-    setViewCategoryModal(false)
-    setHandWrittenCategory('')
-    setHandWrittenCategoryThumbnail('')
-    setErrorMessage({info:"", thumbnail: "", item: ""})
-    setViewSource(false)
-    setIsPreviewCard(false)
-    setViewCat(false)
-    setSelectedImageIndex(null)
-    setDisplayNum(startIndex)
-    setErrorForm(null)
-  }
-
-  const SubmitForm = ()=>{
-    if(viewCat) {
-        if(handWrittenCategory.trim() && handWrittenCategoryThumbnail) {
-          createCategory(handWrittenCategory, handWrittenCategoryThumbnail)
-        }
-        else setErrorMessage(prev=>({...prev, item: "Empty category fields detected for creation"}))
-    }
-    else{
-        createCategory(formData?.category.name, formData?.category.image)
-    }
-    submitItem()
-  }
 
   const handleShow = (e, value, input)=>{
         if(e.key === 'Enter' && input.trim()){
@@ -123,20 +97,20 @@ const EditItem = ({itemId, selectedItem}) => {
     setFormData((prev)=>({...prev, thumbnails: prev.thumbnails.map((img, i)=>( i === index ? update : img))}))
   }
 
-  const handleRadio = (e, input, type, index)=>{
+  const handleRadio = (e, input, type)=>{
     if(type.includes('cat')){
         setFormData(prev=>({...prev, 
-          category: {...prev, name: input, image: categories[index]?.image}, 
+          category: input, 
         }))
         setTimeout(() => {
           setViewCategoryModal(false)
-        }, 300);
+        }, 300)
     }
     else if(type.includes('source')) {
         setTimeout(() => {
           setFormData(prev=>({...prev, source: input}))
           setViewSource(false)
-        }, 300);
+        }, 300)
     }
     else {
       console.log('Error in handleRadio: type not recognized -', type);
@@ -146,7 +120,7 @@ const EditItem = ({itemId, selectedItem}) => {
 
   const addNewBlock = ()=>{
     if(newInfoData[newInfoData.length-1]?.cost && newInfoData[newInfoData.length-1]?.details && newInfoData[newInfoData.length-1]?.qty){
-        setNewInfoData((prev)=>([...prev, {qty: "", cost: "", details: ""}]))
+        setNewInfoData((prev)=>([...prev, {id: "", qty: "", cost: "", details: ""}]))
         setErrorMessage({info:"", thumbnail: "", item: ""})
     }
     else setErrorMessage((prev)=>({...prev, info: "Empty field found!"}))
@@ -182,29 +156,34 @@ const EditItem = ({itemId, selectedItem}) => {
       setViewCategoryModal(!isViewCategoryModal)
   }
 
-  const getDetails = async()=>{
-    setLoading("Loading item's details")
-    try {
-        const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
-        const temp = response.data[0]
-        const newData = {
-          name: temp.name,
-          description: temp.description,
-          category: temp.category,
-          source: temp.source,
-          infos: temp.infos || [],
-          thumbnails: temp.thumbnails || [],
-        }        
-        setFormData(JSON.parse(JSON.stringify(newData)))
-        setBackupData(JSON.parse(JSON.stringify(newData)))
-    } catch (error) {
-        console.log(`${error.message}`);
-    }
-    finally{
-      setLoading('')
-    }
+  const resetForm = ()=>{
+    setFormData(JSON.parse(JSON.stringify(backUpData)))
+    setNewInfoData([{id: "", qty: "", cost: "", details: ""}])
+    setViewCategoryModal(false)
+    setHandWrittenCategoryName('')
+    setHandWrittenCategoryThumbnail('')
+    setErrorMessage({info:"", thumbnail: "", item: ""})
+    setViewSource(false)
+    setIsPreviewCard(false)
+    setViewCat(false)
+    setSelectedImageIndex(null)
+    setDisplayNum(startIndex)
+    setErrorForm({status: true, message: "Reset successful", type: "reset"})
   }
+  
+  const SubmitForm = ()=>{
+    //handle category
+    if(viewCat) {
+        if(handWrittenCategoryName.trim() && handWrittenCategoryThumbnail) {
+          setFormData(prev=>({...prev, category: {id: "", name: handWrittenCategoryName, image: handWrittenCategoryThumbnail}}))
+        }
+        else {setErrorMessage(prev=>({...prev, item: "Empty category fields detected for creation"}))}
+    }
 
+    //handle info
+    
+  }
+  
   const allCategories = async () =>{
     setLoading('')
     try {
@@ -218,20 +197,21 @@ const EditItem = ({itemId, selectedItem}) => {
     }
   }
 
-  const submitItem = async () =>{
+  const putSubmitItem = async () =>{
     try {
       const response = await axios.put(`${API_URL}/developer/full/${itemId}`)
       setErrorForm(response.data)
     } catch (error) {
+      setErrorForm(error)
       console.log(error)
     }
   }
 
   useEffect(()=>{
-    if(itemId){
-        getDetails()
-    }
-  },[itemId])
+    const lastElement = newInfoData[newInfoData.length-1]
+    if(lastElement.qty && lastElement.cost && lastElement.details)
+      addNewBlock()
+  },[newInfoData])
   
   useEffect(()=>{
         allCategories()
@@ -255,7 +235,7 @@ const EditItem = ({itemId, selectedItem}) => {
   return (
     <div className='flex flex-col h-full gap-2 w-full px-2 md:px-30 lg:px-30 xl:px-40'>
 
-      {errorForm && (<div className={` font-bold text-center ${errorForm?.status? 'bg-green-100 text-green-500':'text-red-500 bg-red-100'}`}>
+      {errorForm && (<div className={` font-bold text-center ${errorForm?.type === 'submit' && errorForm?.status && 'bg-green-100 text-green-500'} ${errorForm?.type === 'submit' && !errorForm?.status && 'bg-red-100 text-red-500'} ${errorForm?.type === 'reset' && 'text-yellow-500 bg-yellow-100'}`}>
         {errorForm?.message}
       </div>)}
       {/*-----------------------------------------
@@ -274,7 +254,7 @@ const EditItem = ({itemId, selectedItem}) => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Name <span className='text-red-500'>*</span></h2>
             <input 
-            type='text' value={formData?.name} placeholder={selectedItem?.name} 
+            type='text' value={formData?.name} placeholder={formData?.name} 
             onChange={((e)=>(setFormData((prev)=>({...prev, name: e.target.value}))))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
@@ -284,7 +264,7 @@ const EditItem = ({itemId, selectedItem}) => {
             <h2 className='font-medium'>Description</h2>
             <textarea 
             onKeyDown={(e)=>(handleShow(e, 'Description', formData?.description))} 
-            value={formData?.description} placeholder={selectedItem.description} onChange={((e)=>(setFormData((prev)=>({...prev, description: e.target.value}))))} 
+            value={formData?.description} placeholder={formData.description} onChange={((e)=>(setFormData((prev)=>({...prev, description: e.target.value}))))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
           </div>
@@ -309,7 +289,7 @@ const EditItem = ({itemId, selectedItem}) => {
                 {!viewCat && (
                 <div className={`space-y-2`}>
                   <label className='w-full flex items-center '>
-                    <input type='text' placeholder={selectedItem.category} readOnly value={formData?.category.name} onClick={()=>(handleCategoryRadio())} 
+                    <input type='text' placeholder={formData.category} readOnly value={formData?.category?.name} onClick={()=>(handleCategoryRadio())} 
                     className='w-full h-full border border-gray-500 cursor-pointer text-gray-800 px-1 rounded-sm'/>
                   </label>
                   <label className='flex items-center justify-center w-full'>
@@ -331,7 +311,7 @@ const EditItem = ({itemId, selectedItem}) => {
                   <label className='w-full flex items-center'>
                     <input type='text' 
                     className={`focus:ring-2 h-full w-full border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` } 
-                    placeholder='Custom name ...' value={handWrittenCategory} onChange={(e)=>(setHandWrittenCategory(e.target.value))}/>
+                    placeholder='Custom name ...' value={handWrittenCategoryName} onChange={(e)=>(setHandWrittenCategoryName(e.target.value))}/>
                   </label>
                   <label className='flex items-center justify-center w-full'>
                       <div className='h-20 lg:h-30 w-full bg-white rounded-md border text-gray-500 text-sm border-gray-300'>
@@ -352,11 +332,11 @@ const EditItem = ({itemId, selectedItem}) => {
                 <div className='bg-ed-500 h-full w-full flex justify-center relative'>
                   <div ref={ref} className='absolute top-43 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
                       {categories.map((cat, index)=>(
-                      <label key={cat.category_id} onClick={(e)=>(handleRadio(e, cat.category_name, 'cat', index))} 
+                      <label key={cat.id} onClick={(e)=>(handleRadio(e, cat, 'cat'))} 
                         className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                           <input
                           type='radio' value={cat.category_name} name='category' required={index === 0}/>
-                          {cat.category_name}
+                          {cat.name}
                       </label>
                     ))}
                   </div>
@@ -369,17 +349,17 @@ const EditItem = ({itemId, selectedItem}) => {
             <div className='flex gap-2'>
               <p className='font-medium'>Source</p>
               <button onClick={()=>(setViewSource(!isViewSource))} className='border border-gray-500 min-w-30 cursor-pointer text-gray-500 px-1 rounded-sm'>
-                {formData?.source? formData?.source : selectedItem?.source}
+                {formData?.source ? formData?.source?.name : formData?.source?.name}
               </button>
             </div>
             {isViewSource && (
                 <div className='fixed top-0 left-0 right-0 bottom-0 bg-black/10 transition-all duration-500 ease-in-out w-full h-screen z-100'>
                   <div className='bg-ed-500 h-full w-full flex justify-center relative'>
                    <div ref={ref} className='absolute top-71 w-64 transition-all duration-500 ease-in-out max-h-100 overflow-y-auto bg-white rounded-lg border border-blue-300 text-gray-800 p-2 flex flex-col gap-1'>
-                        {sources?.map((s, index)=>(
-                        <label key={s.id} onClick={(e)=>(handleRadio(e, s.name, 'source', index))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
+                        {sources?.map((s)=>(
+                        <label key={s.id} onClick={(e)=>(handleRadio(e, s, 'source'))} className={`flex gap-1 hover:bg-blue-100 px-1 rounded-md break-all`}>
                             <input
-                            type='radio' onChange={(e)=>(setFormData((prev)=>({...prev, source:e.target.value})))} value={s.name} name='source' />
+                            type='radio' placeholder={'source name'+s.name} value={s.name} name='source' />
                             {s.name}
                         </label>
                       ))}
@@ -460,10 +440,10 @@ const EditItem = ({itemId, selectedItem}) => {
 
         {selectInfosType === 'new' &&
         (<div className='space-y-2 py-2'>
-          {errorMessage.info && (
+          {errorMessage?.info && (
             <div className='bg-red-50 text-red-500 flex gap-1 items-center justify-center transition-all duration-200 ease-in-out '>
                 <AlertCircle className='' size={15}/>
-                <p className='text-center'>{errorMessage.info}</p>
+                <p className='text-center'>{errorMessage?.info}</p>
             </div>          
           )}
           {newInfoData?.map((i, index)=>(
@@ -499,15 +479,10 @@ const EditItem = ({itemId, selectedItem}) => {
           </div>
           </div>
           ))}
-            <button onClick={()=>(addNewBlock())} className='bg-blue-100 mx-auto m-2 h-fit gap-1 p-2 text-blue-500 rounded-lg outline transitiion-all duration-800 ease-in bg-red-5000 flex items-center justify-center'>          
-                <PlusCircle className='w-5 h-5' />
-                Add More Infos
-            </button>
         </div>)}
         </div>
 
       </div>
-
 
       {/*-----------------------------------------
         thumbnails

@@ -71,13 +71,37 @@ router.get("/developer", async (req, res)=>{
     const params = []
     let query = ''
     query = `
-        SELECT i.item_id, i.name, i.description, s.source_name AS source, 
+        SELECT i.item_id, i.name, i.description, 
+          (SELECT json_build_object(
+            'id', s.source_id,
+            'name', s.source_name
+          )) AS source,
         i.created_at::DATE AS date,
         i.created_at::TIME AS time,
         (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS images,
-        (SELECT cat.category_name FROM categories cat WHERE cat.category_id =  i.category_id) AS category
-        FROM items i LEFT JOIN sources s ON s.source_id = i.source_id`
-        query+=` LEFT JOIN infos inf2 ON inf2.item_id=i.item_id WHERE `
+        (SELECT json_build_object(
+            'id', cat2.category_id,
+            'name', cat2.category_name,
+            'image', cat2.image
+        )) AS category,
+        (SELECT json_agg(
+          json_build_object(
+              'qty', inf.qty,
+              'cost', inf.cost,
+              'details', inf.details
+            )
+         ) FROM infos inf WHERE inf.item_id = i.item_id AND inf.is_active = true) AS infos,
+        (SELECT json_agg(
+          json_build_object(
+              'file', th.image,
+              'cost', th.image
+            )
+        ) FROM thumbnails th WHERE th.item_id = i.item_id) AS thumbnails
+        FROM items i 
+        LEFT JOIN sources s ON s.source_id = i.source_id
+        LEFT JOIN infos inf2 ON inf2.item_id=i.item_id
+        JOIN categories cat2 ON cat2.category_id = i.category_id WHERE `
+        
         if(search){
             if(category === 'all'){
                 query+=`
@@ -98,7 +122,7 @@ router.get("/developer", async (req, res)=>{
             params.push(`%${category}%`)}
         }
 
-    query += `AND inf2.is_active = true GROUP BY i.item_id, s.source_id ORDER BY i.created_at `;
+    query += `AND inf2.is_active = true GROUP BY i.item_id, s.source_id, cat2.category_id ORDER BY i.created_at `;
     const response = await pool.query(query, params)
     if(response.length === 0){ return res.status(404).json(`No math found`)}
     res.status(200).json(response.rows)
@@ -195,8 +219,13 @@ router.get("/developer/:item_id", async(req, res)=>{
     try {
       const {item_id} = req.params
       const response = await pool.query(`
-        SELECT i.item_id, i.name, i.description, s.source_name AS source,
+        SELECT i.item_id, i.name, i.description, 
         (SELECT json_build_object(
+          'id', s.source_id,
+          'name', s.source_name
+          )) AS source,
+        (SELECT json_build_object(
+            'id', cat.category_id,
             'name', cat.category_name, 
             'image', cat.image
         )) AS category,
@@ -213,7 +242,8 @@ router.get("/developer/:item_id", async(req, res)=>{
               'cost', th.image
             )
         ) FROM thumbnails th WHERE th.item_id = i.item_id) AS thumbnails
-        FROM items i JOIN sources s ON s.source_id = i.source_id 
+        FROM items i 
+        JOIN sources s ON s.source_id = i.source_id 
         JOIN categories cat ON cat.category_id = i.category_id
         WHERE i.item_id = $1
         GROUP BY i.item_id, cat.category_id, s.source_id `,[item_id])
@@ -391,6 +421,7 @@ router.put('/developer/full/:item_id', upload.array("newImages"), async (req, re
     res.status(200).json({
         status: true,
         message: "Item updated successfully",
+        type: "submit"
     })
 
   } catch (error) {

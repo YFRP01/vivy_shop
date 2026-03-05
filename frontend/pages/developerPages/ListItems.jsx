@@ -89,7 +89,7 @@ const ListItems = () => {
                   <XCircle className='cursor-pointer w-7 h-7' onClick={()=>(setViewDetailsModal(false))} />
                 </div>
                 <div className='overflow-y-auto h-full'>
-                    <EditItem setViewDetailsModal={setViewDetailsModal} selectedItem={selectedItem} itemId={itemToViewDetails}/>  
+                    <EditItem selectedItem={selectedItem} itemId={itemToViewDetails}/>  
                 </div>
               </div>
           </div>

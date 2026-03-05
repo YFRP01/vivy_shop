@@ -10,7 +10,7 @@ const router = Router()
 router.get("/", async (req, res)=>{
     try {
         const result = await pool.query(`
-            SELECT category_id, category_name, image FROM categories ORDER BY category_name ASC
+            SELECT category_id AS id, category_name AS name, image FROM categories ORDER BY category_name ASC
             `);
         res.status(200).json(result.rows)
     } catch (error) {
@@ -67,33 +67,33 @@ router.get("/developer", async (req, res)=>{
     }
 })
 
-// router.post("/developer", upload.single("image"), async(req, res)=>{
-//     try {
-//         const {name} = req.body
-//         const imageFile = req.file
-//         if(!name || !name.trim()){
-//             return res.status(400).json("Category name required!")
-//         }
-//         if(!imageFile){
-//             return res.status(400).json("Category image required!")
-//          }
-//         const imagePath = `/uploads/categories/${imageFile.filename}`
+router.post("/developer", upload.single("image"), async(req, res)=>{
+    try {
+        const {name} = req.body
+        const imageFile = req.file
+        if(!name || !name.trim()){
+            return res.status(400).json("Category name required!")
+        }
+        if(!imageFile){
+            return res.status(400).json("Category image required!")
+         }
+        const imagePath = `/uploads/categories/${imageFile.filename}`
 
-//         const existingName = await pool.query(`SELECT 1 FROM categories WHERE LOWER(category_name) = LOWER($1)`, [name.trim()])
-//         const existingImage = await pool.query(`SELECT 1 FROM categories WHERE LOWER(image) = LOWER($1)`, [imagePath])
+        const existingName = await pool.query(`SELECT 1 FROM categories WHERE LOWER(category_name) = LOWER($1)`, [name.trim()])
+        const existingImage = await pool.query(`SELECT 1 FROM categories WHERE LOWER(image) = LOWER($1)`, [imagePath])
         
-//         if(existingName.rows.length > 0) return res.status(409).json("Category name already exists")
-//         if(existingImage.rows.length > 0) return res.status(409).json("Category image already exists")
+        if(existingName.rows.length > 0) return res.status(409).json("Category name already exists")
+        if(existingImage.rows.length > 0) return res.status(409).json("Category image already exists")
         
-//         const response = await pool.query(`
-//             INSERT INTO categories (category_name, image) VALUES ($1, $2) RETURNING category_id, category_name, image`,
-//             [name.trim(), imagePath]
-//         )
-//         res.status(201).json(response.rows[0])
-//     } catch (error) {
-//         res.status(500).json(`Unable to post the item: ${error.message}`)
-//     }
-// })
+        const response = await pool.query(`
+            INSERT INTO categories (category_name, image) VALUES ($1, $2) RETURNING category_id, category_name, image`,
+            [name.trim(), imagePath]
+        )
+        res.status(201).json(response.rows[0])
+    } catch (error) {
+        res.status(500).json(`Unable to post the item: ${error.message}`)
+    }
+})
 
 
 export default router
