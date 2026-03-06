@@ -172,6 +172,7 @@ const EditItem = ({itemId, selectedItem}) => {
   }
   
   const SubmitForm = ()=>{
+    setErrorForm(null)
     //handle category
     if(viewCat) {
         if(handWrittenCategoryName.trim() && handWrittenCategoryThumbnail) {
@@ -181,7 +182,30 @@ const EditItem = ({itemId, selectedItem}) => {
     }
 
     //handle info
-    
+    let holdInfos = []
+    newInfoData.map((info, index)=>{
+      const checkExistence = formData?.infos?.filter((i)=>(i === info))
+      if(checkExistence.length > 0){
+        setErrorMessage(prev=>({...prev, info: `Item at index ${index+formData?.infos?.length} already existing. Duplicate items deleted`}))
+      }
+      // else if(newInfoData.filter((i)=> i === info).length < 1){
+      //   holdInfos.push(info)
+      //   setErrorMessage(prev=>({...prev, info: "Newly inserted items duplicates"}))
+      // }
+      else {
+        if(info.qty && info.cost && info.details){
+          setFormData(prev=>({...prev, infos: [...prev.infos, info]}))
+          setErrorMessage(prev=>({...prev, info: "New info insert successfull"}))
+          holdInfos = []
+        }
+        else {
+          if(index !== newInfoData.length-1){setErrorMessage(prev=>({...prev, info: "Incomplete item found"}))}
+
+        }
+      }
+    })
+    holdInfos.push({id: "", qty: "", cost: "",details: ""})
+    setNewInfoData([holdInfos]);
   }
   
   const allCategories = async () =>{
