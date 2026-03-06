@@ -71,32 +71,10 @@ router.get("/developer", async (req, res)=>{
     const params = []
     let query = ''
     query = `
-        SELECT i.item_id, i.name, i.description, 
-          (SELECT json_build_object(
-            'id', s.source_id,
-            'name', s.source_name
-          )) AS source,
-        i.created_at::DATE AS date,
-        i.created_at::TIME AS time,
+        SELECT i.item_id, i.name, i.description, i.created_at::DATE AS date, i.created_at::TIME AS time,
+        s.source_name AS source,
         (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS images,
-        (SELECT json_build_object(
-            'id', cat2.category_id,
-            'name', cat2.category_name,
-            'image', cat2.image
-        )) AS category,
-        (SELECT json_agg(
-          json_build_object(
-              'qty', inf.qty,
-              'cost', inf.cost,
-              'details', inf.details
-            )
-         ) FROM infos inf WHERE inf.item_id = i.item_id AND inf.is_active = true) AS infos,
-        (SELECT json_agg(
-          json_build_object(
-              'file', th.image,
-              'cost', th.image
-            )
-        ) FROM thumbnails th WHERE th.item_id = i.item_id) AS thumbnails
+        cat2.category_name
         FROM items i 
         LEFT JOIN sources s ON s.source_id = i.source_id
         LEFT JOIN infos inf2 ON inf2.item_id=i.item_id
@@ -231,6 +209,7 @@ router.get("/developer/:item_id", async(req, res)=>{
         )) AS category,
         (SELECT json_agg(
           json_build_object(
+              'id', inf.info_id,
               'qty', inf.qty,
               'cost', inf.cost,
               'details', inf.details
@@ -361,11 +340,11 @@ router.put('/developer/full/:item_id', upload.array("newImages"), async (req, re
     //Handle infos
     //============
     const allInfos = await client.query(`SELECT info_id, qty, cost, details FROM infos WHERE item_id = $1`, [item_id])
-    const dbInfosIds = allInfos.rows.map((info)=>info.info_id)
+    const dbInfos = allInfos.rows.map((info)=>info.info_id)
     const submittedInfosIds = submittedInfos.filter((info)=>info.info_id).map((i)=>i.info_id)
-    const newlyCreatedInfos = submittedInfos.filter((i)=>!i.info_id || i.info_id !== dbInfosIds(i.info_id))
-    const updatedInfos = submittedInfos.filter((info)=> info.info_id  && dbInfosIds.includes(info.info_id))
-    const deletedInfos = dbInfosIds.filter((id)=> !submittedInfosIds.includes(id))
+    const newlyCreatedInfos = submittedInfos.filter((i)=>!i.info_id && i.info_id !== dbInfos.includes(i.info_id))
+    const updatedInfos = submittedInfos.filter((info)=> info.info_id  && dbInfos.includes(info.info_id))
+    const deletedInfos = dbInfos.filter((info)=> !submittedInfosIds.includes(info.info_id))
 
     //update info
     for(let info of updatedInfos){
@@ -378,15 +357,42 @@ router.put('/developer/full/:item_id', upload.array("newImages"), async (req, re
         [info.qty, info.cost, info.details, info.info_id])
     }
 
+// [
+//     {
+//         "id": "7e0abb54-d6b6-43bf-bee7-fdf7e2476565",
+//         "qty": 5,
+//         "cost": "224.88",
+//         "details": "Phasellus in felis."
+//     },
+//     {
+//         "id": "",
+//         "qty": 8,
+//         "cost": "8.88",
+//         "details": "Phasellus in felis."
+//     },
+//     {
+//         "id": "",
+//         "qty": 5,
+//         "cost": "224.88",
+//         "details": ""
+//     },
+//     {
+//         "id": "",
+//         "qty": "0",
+//         "cost": "0",
+//         "details": ""
+//     }
+// ]
     //create info
+    console.log(newlyCreatedInfos)
     for(let info of newlyCreatedInfos){
       await client.query(`INSERT INTO infos (qty, cost, details, item_id) VALUES ($1, $2, $3, $4)`, [info.qty, info.cost, info.details, item_id])
     }
 
     //delete info
-    for(let infoId of deletedInfos){
-      await client.query(`UPDATE infos SET is_active = false WHERE info_id = $1`, [infoId])
-    }
+    // for(let infoId of deletedInfos){
+    //   await client.query(`UPDATE infos SET is_active = false WHERE info_id = $1`, [infoId])
+    // }
 
 
     //==================

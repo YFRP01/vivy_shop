@@ -5,7 +5,7 @@ import { sources } from '../src/assets/assets'
 import { AlertCircle, ChevronDown, ChevronUp, CircleAlert, Columns, Edit, Edit2, FlipVertical, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X, XCircle } from 'lucide-react'
 import PreviewImage from './PreviewImage'
 
-const EditItem = ({itemId, selectedItem}) => {
+const EditItem = ({itemId}) => {
 
   const ref = useRef()
   const startIndex = 1
@@ -22,16 +22,15 @@ const EditItem = ({itemId, selectedItem}) => {
   const [handWrittenCategoryThumbnail, setHandWrittenCategoryThumbnail] = useState('')
   const [errorMessage, setErrorMessage] = useState({info:"", thumbnail: "", item: ""})
   const [selectInfosType, setSelectedInfosType] = useState('new')
-  const [firstHoldData] = useState({
-    name: selectedItem?.name || '',
-    description: selectedItem?.description || '',
-    category: selectedItem?.category || '',
-    source: selectedItem?.source || null,
-    infos: selectedItem?.infos || [],
-    thumbnails: selectedItem?.thumbnails || []
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    category: null,
+    source: null,
+    infos: [],
+    thumbnails: []
   })
-  const [backUpData] = useState(JSON.parse(JSON.stringify(firstHoldData)))
-  const [formData, setFormData] = useState(JSON.parse(JSON.stringify(firstHoldData)))
+  const [backUpData, setBackupData] = useState(JSON.parse(JSON.stringify(formData)))
   
   const [newInfoData, setNewInfoData] = useState([
     {
@@ -119,7 +118,7 @@ const EditItem = ({itemId, selectedItem}) => {
   }
 
   const addNewBlock = ()=>{
-    if(newInfoData[newInfoData.length-1]?.cost && newInfoData[newInfoData.length-1]?.details && newInfoData[newInfoData.length-1]?.qty){
+    if(isValid(newInfoData[newInfoData.length-1])){
         setNewInfoData((prev)=>([...prev, {id: "", qty: "", cost: "", details: ""}]))
         setErrorMessage({info:"", thumbnail: "", item: ""})
     }
@@ -170,9 +169,38 @@ const EditItem = ({itemId, selectedItem}) => {
     setDisplayNum(startIndex)
     setErrorForm({status: true, message: "Reset successful", type: "reset"})
   }
+
+  const ItemDetails = async()=>{
+    try {
+      const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
+      const data = response.data[0]        
+      const newData = {
+          name: data.name || '',
+          description: data.description || '',
+          category: data.category || null,
+          source: data.source || null,
+          infos: data.infos || [],
+          thumbnails: data.thumbnails || []
+        }
+        setFormData(JSON.parse(JSON.stringify(newData)))
+        setBackupData(JSON.parse(JSON.stringify(newData)))
+      } 
+      catch (error) {
+      console.log(`Unable to fetch the item details: ${error}`)
+    }
+  }
+
+    const isValid = (elt)=>{
+      return (
+        elt.qty && elt.qty !== null && elt.qty !== "" &&
+        elt.cost && elt.cost !== null && elt.cost !== "" &&
+        elt.details && elt.details !== null && elt.details !== ""
+      )
+    }    
   
   const SubmitForm = ()=>{
     setErrorForm(null)
+
     //handle category
     if(viewCat) {
         if(handWrittenCategoryName.trim() && handWrittenCategoryThumbnail) {
@@ -181,31 +209,34 @@ const EditItem = ({itemId, selectedItem}) => {
         else {setErrorMessage(prev=>({...prev, item: "Empty category fields detected for creation"}))}
     }
 
-    //handle info
-    let holdInfos = []
-    newInfoData.map((info, index)=>{
-      const checkExistence = formData?.infos?.filter((i)=>(i === info))
-      if(checkExistence.length > 0){
-        setErrorMessage(prev=>({...prev, info: `Item at index ${index+formData?.infos?.length} already existing. Duplicate items deleted`}))
-      }
-      // else if(newInfoData.filter((i)=> i === info).length < 1){
-      //   holdInfos.push(info)
-      //   setErrorMessage(prev=>({...prev, info: "Newly inserted items duplicates"}))
-      // }
-      else {
-        if(info.qty && info.cost && info.details){
-          setFormData(prev=>({...prev, infos: [...prev.infos, info]}))
-          setErrorMessage(prev=>({...prev, info: "New info insert successfull"}))
-          holdInfos = []
-        }
-        else {
-          if(index !== newInfoData.length-1){setErrorMessage(prev=>({...prev, info: "Incomplete item found"}))}
+    //handle info 
+    let fillNewInfo = []
+    let mainInfoArray = formData?.infos
 
-        }
+    const isDuplicate = (newInfo)=>{
+      return(
+        mainInfoArray.some((info)=> info.qty === newInfo.qty && info.cost === newInfo.cost && info.details === newInfo.details)
+      )
+    }
+    //map
+    newInfoData.forEach((info, index)=>{
+      if(isValid(info)){
+          if(!isDuplicate(info)){
+                mainInfoArray.push(info)
+                setErrorMessage(prev=>({...prev, info: "New info insert successfull"}))
+              }
+          else {
+              setErrorMessage(prev=>({...prev, info: `Item at index ${index+formData?.infos?.length || null} already existing. Duplicate items deleted`}))
+            }
+        }      
+      else{
+        fillNewInfo.push(info)
+        setErrorForm(prev=>({...prev, info: "Incomplete infos identified"}))
       }
     })
-    holdInfos.push({id: "", qty: "", cost: "",details: ""})
-    setNewInfoData([holdInfos]);
+    setFormData(prev=>({...prev, infos: [...mainInfoArray]}))  
+    setNewInfoData([])
+    setNewInfoData(([...fillNewInfo]))
   }
   
   const allCategories = async () =>{
@@ -232,8 +263,12 @@ const EditItem = ({itemId, selectedItem}) => {
   }
 
   useEffect(()=>{
+    ItemDetails()
+  },[itemId])
+
+  useEffect(()=>{
     const lastElement = newInfoData[newInfoData.length-1]
-    if(lastElement.qty && lastElement.cost && lastElement.details)
+    if(lastElement?.qty && lastElement?.cost && lastElement?.details)
       addNewBlock()
   },[newInfoData])
   
@@ -288,7 +323,7 @@ const EditItem = ({itemId, selectedItem}) => {
             <h2 className='font-medium'>Description</h2>
             <textarea 
             onKeyDown={(e)=>(handleShow(e, 'Description', formData?.description))} 
-            value={formData?.description} placeholder={formData.description} onChange={((e)=>(setFormData((prev)=>({...prev, description: e.target.value}))))} 
+            value={formData?.description} placeholder={formData?.description} onChange={((e)=>(setFormData((prev)=>({...prev, description: e.target.value}))))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
           </div>
@@ -313,7 +348,7 @@ const EditItem = ({itemId, selectedItem}) => {
                 {!viewCat && (
                 <div className={`space-y-2`}>
                   <label className='w-full flex items-center '>
-                    <input type='text' placeholder={formData.category} readOnly value={formData?.category?.name} onClick={()=>(handleCategoryRadio())} 
+                    <input type='text' placeholder={formData?.category} readOnly value={formData?.category?.name} onClick={()=>(handleCategoryRadio())} 
                     className='w-full h-full border border-gray-500 cursor-pointer text-gray-800 px-1 rounded-sm'/>
                   </label>
                   <label className='flex items-center justify-center w-full'>
@@ -481,7 +516,7 @@ const EditItem = ({itemId, selectedItem}) => {
           <div className='flex gap-2 p-1'>
             <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
             <input 
-            type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleNewInfoChange(e, 'qty', index)))} 
+            type='number' min={1} step={1} value={i?.qty} placeholder='Quantity' onChange={((e)=>(handleNewInfoChange(e, 'qty', index)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
           </div>
@@ -489,7 +524,7 @@ const EditItem = ({itemId, selectedItem}) => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
             <input 
-            type='number' value={i.cost} min={0} placeholder='Cost' onChange={((e)=>(handleNewInfoChange(e, 'cost', index)))} 
+            type='number' value={i?.cost} min={0} placeholder='Cost' onChange={((e)=>(handleNewInfoChange(e, 'cost', index)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             required/>
           </div>
@@ -497,7 +532,7 @@ const EditItem = ({itemId, selectedItem}) => {
           <div className='flex gap-2 p-1'>
             <h2 className='font-medium'>Details</h2>
             <textarea
-            type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleNewInfoChange(e, 'details', index)))} 
+            type='text' value={i?.details} placeholder='Details ' onChange={((e)=>(handleNewInfoChange(e, 'details', index)))} 
             className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
             />
           </div>

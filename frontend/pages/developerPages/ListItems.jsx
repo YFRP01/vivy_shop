@@ -18,7 +18,6 @@ const ListItems = () => {
   const [itemToDeleteId, setItemToDeleteId] = useState(null)
   const [viewDetailsModal, setViewDetailsModal] = useState(false)
   const [itemToViewDetails, setItemToViewDetails] = useState(null)
-  const [selectedItem, setSelectedItem] = useState({})
 
   const getDevItems = async()=>{
     try {
@@ -74,7 +73,7 @@ const ListItems = () => {
               <div key={item.item_id} 
               className='flex gap-2 items-center justify-center p-a' >
                   <button className='outline-none text-start w-full'
-                    onClick={()=>(setViewDetailsModal(true), setSelectedItem(item), setItemToViewDetails(item.item_id))}>
+                    onClick={()=>(setViewDetailsModal(true), setItemToViewDetails(item.item_id))}>
                       <DevItemsCards item={item} />
                   </button>
                   <Trash2 onClick={()=>(setItemToDeleteId(item.item_id), deleteItem())} className='text-red-500 fill-red-500 hover:text-red-800 hover:fill-red-800  trannsition-all duration-100 ease-in-out ' />
@@ -89,7 +88,7 @@ const ListItems = () => {
                   <XCircle className='cursor-pointer w-7 h-7' onClick={()=>(setViewDetailsModal(false))} />
                 </div>
                 <div className='overflow-y-auto h-full'>
-                    <EditItem selectedItem={selectedItem} itemId={itemToViewDetails}/>  
+                    <EditItem itemId={itemToViewDetails}/>  
                 </div>
               </div>
           </div>
