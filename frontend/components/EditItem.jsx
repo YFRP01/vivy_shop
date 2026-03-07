@@ -2,8 +2,10 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 import { API_URL, BASE_URL } from '../api'
 import { sources } from '../src/assets/assets'
-import { AlertCircle, ChevronDown, ChevronUp, CircleAlert, Columns, Edit, Edit2, FlipVertical, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X, XCircle } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronUp, CircleAlert, Columns, Edit, Edit2, FlipVertical, Loader, Plus, PlusCircle, PlusCircleIcon, Pointer, Trash, X, XCircle } from 'lucide-react'
 import PreviewImage from './PreviewImage'
+import Loading from './Loading'
+import NotFoundPage from './NotFoundPage'
 
 const EditItem = ({itemId}) => {
 
@@ -37,7 +39,8 @@ const EditItem = ({itemId}) => {
       id: "",
       qty: "",
       cost: "",
-      details: ""
+      details: "",
+      status: "empty"
     }
   ])
 
@@ -52,7 +55,7 @@ const EditItem = ({itemId}) => {
     setFormData((prev)=> ({...prev, 
     infos: prev.infos.map((info, i) => 
         i === index 
-            ? { ...info, [field]: val }
+            ? { ...info, [field]: val, status: "changed" }
             : info
     )}))  
   }
@@ -61,7 +64,8 @@ const EditItem = ({itemId}) => {
     const val = e.target.value
     setNewInfoData((prev)=> (prev.map((item, i)=> index === i ? 
         {...item, 
-          [field]: val
+          [field]: val,
+          status: "changed"
         }
           : item 
     )))    
@@ -126,8 +130,13 @@ const EditItem = ({itemId}) => {
   }
 
   const handleDelInfo = (index) =>{
-    const update = formData?.infos.filter((_, i)=> i !== index)
-    setFormData(prev=>({...prev, infos: update}))
+    // const update = formData?.infos.filter((_, i)=> i !== index)
+    setFormData(prev=>({...prev, infos: 
+        prev.infos?.map((inf, ind)=>(
+        ind === index ? {...inf, status: "deleted"} : inf
+        )
+      )}
+    ))
     setErrorMessage({info:"", thumbnail: "", item: ""})
   }
 
@@ -171,22 +180,30 @@ const EditItem = ({itemId}) => {
   }
 
   const ItemDetails = async()=>{
+    setLoading(true)
     try {
       const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
-      const data = response.data[0]        
-      const newData = {
-          name: data.name || '',
-          description: data.description || '',
-          category: data.category || null,
-          source: data.source || null,
-          infos: data.infos || [],
-          thumbnails: data.thumbnails || []
-        }
-        setFormData(JSON.parse(JSON.stringify(newData)))
-        setBackupData(JSON.parse(JSON.stringify(newData)))
+      const holdData = response.data[0]        
+      const processData = (data) =>{
+          return ({
+            ...data, 
+            infos: data.infos?.map((i)=>(
+              {...i, status: "unchaged"}
+            )),
+            thumbnails: data.thumbnails?.map((th)=>(
+              {...th, status: "unchaged"}
+            ))
+          })
+      }
+      const newData = processData(holdData)
+      setFormData(structuredClone(newData))
+      setBackupData(structuredClone(newData))
       } 
       catch (error) {
       console.log(`Unable to fetch the item details: ${error}`)
+    }
+    finally{
+      setLoading(false)
     }
   }
 
@@ -200,16 +217,18 @@ const EditItem = ({itemId}) => {
   
   const SubmitForm = ()=>{
     setErrorForm(null)
-
+    //===============
     //handle category
+    //===============
     if(viewCat) {
         if(handWrittenCategoryName.trim() && handWrittenCategoryThumbnail) {
-          setFormData(prev=>({...prev, category: {id: "", name: handWrittenCategoryName, image: handWrittenCategoryThumbnail}}))
+          setFormData(prev=>({...prev, category: {id: "",name: handWrittenCategoryName, image: handWrittenCategoryThumbnail}}))
         }
         else {setErrorMessage(prev=>({...prev, item: "Empty category fields detected for creation"}))}
     }
-
+    //==============
     //handle info 
+    //==============
     let fillNewInfo = []
     let mainInfoArray = formData?.infos
 
@@ -237,6 +256,23 @@ const EditItem = ({itemId}) => {
     setFormData(prev=>({...prev, infos: [...mainInfoArray]}))  
     setNewInfoData([])
     setNewInfoData(([...fillNewInfo]))
+    putSubmitItem()
+  }  
+  
+  const putSubmitItem = async () =>{
+    try {
+      const response = await axios.put(`${API_URL}/items/developer/full/${itemId}`,{
+        name: formData?.name,
+        description: formData?.description,
+        source_id: formData?.source?.id,
+        category: formData?.category,
+        infos: formData?.infos,
+        thumbnails: formData?.thumbnails
+      })
+      setErrorForm(response.data)
+    } catch (error) {
+      setErrorForm(error)
+    }
   }
   
   const allCategories = async () =>{
@@ -252,15 +288,6 @@ const EditItem = ({itemId}) => {
     }
   }
 
-  const putSubmitItem = async () =>{
-    try {
-      const response = await axios.put(`${API_URL}/developer/full/${itemId}`)
-      setErrorForm(response.data)
-    } catch (error) {
-      setErrorForm(error)
-      console.log(error)
-    }
-  }
 
   useEffect(()=>{
     ItemDetails()
@@ -271,7 +298,7 @@ const EditItem = ({itemId}) => {
     if(lastElement?.qty && lastElement?.cost && lastElement?.details)
       addNewBlock()
   },[newInfoData])
-  
+
   useEffect(()=>{
         allCategories()
   }, [])
@@ -293,7 +320,9 @@ const EditItem = ({itemId}) => {
 
   return (
     <div className='flex flex-col h-full gap-2 w-full px-2 md:px-30 lg:px-30 xl:px-40'>
-
+      {loading ? (<Loading />)
+      :(
+      <div>
       {errorForm && (<div className={` font-bold text-center ${errorForm?.type === 'submit' && errorForm?.status && 'bg-green-100 text-green-500'} ${errorForm?.type === 'submit' && !errorForm?.status && 'bg-red-100 text-red-500'} ${errorForm?.type === 'reset' && 'text-yellow-500 bg-yellow-100'}`}>
         {errorForm?.message}
       </div>)}
@@ -437,7 +466,7 @@ const EditItem = ({itemId}) => {
       <div>
       <div className='flex flex-col'>
           <div className='text-blue-500'>
-              <p>Infos (<span className='text-green-500'>{formData?.infos?.length || 0}</span>)</p>
+              <p>Infos (<span className='text-green-500'>{formData?.infos?.filter((info)=>info?.status !== "deleted").length || 0}</span>)</p>
               <div className='flex text-sm '>
                     <p onClick={()=>(handleInfoType('new'))} className={`${selectInfosType === 'new' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Add</p>
                     <p onClick={()=>(handleInfoType('old'))} className={`${selectInfosType === 'old' ? ' border-b text-white bg-blue-500 hover:bg-blue-700':'hover:bg-blue-100'} cursor-pointer transition-colors duration-200 ease-in flex-1 text-center`}>Ancient</p>
@@ -448,39 +477,47 @@ const EditItem = ({itemId}) => {
           
         {selectInfosType === 'old' &&
         (<div>
-          {formData?.infos?.slice(0,displayNum).map((i, index)=>(
-            <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
-              <div className='flex justify-between px-2 p-1 text-sm'>
-                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{index+1}</p>
-                <Trash onClick={()=>(handleDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
+          {formData?.infos?.map((i, originalIndex)=>({...i, originalIndex}))?.filter((i)=>i?.status !== "deleted")?.length === 0 ? 
+          (
+            <p className={`text-gray-600 bg-gray-100/60 flex items-center justify-center w-full p-1 text-sm text-center min-h-30`}>No page found!</p>
+          ):
+          (
+            <div>
+              {formData?.infos?.map((i, originalIndex)=>({...i, originalIndex}))?.filter((i)=>i?.status !== "deleted")?.slice(0,displayNum).map((i, index)=>(
+                <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
+                  <div className='flex justify-between px-2 p-1 text-sm'>
+                    <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{index+1}</p>
+                    <Trash onClick={()=>(handleDelInfo(i?.originalIndex))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
+                  </div>
+            
+              {/* Qty */}
+              <div className='flex gap-2 p-1'>
+                <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
+                <input 
+                type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e, 'qty', index)))} 
+                className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+                required/>
               </div>
-         
-          {/* Qty */}
-          <div className='flex gap-2 p-1'>
-            <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
-            <input 
-            type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e, 'qty', index)))} 
-            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            required/>
-          </div>
-          {/* cost */}
-          <div className='flex gap-2 p-1'>
-            <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
-            <input 
-            type='number' value={i.cost} min={0} placeholder='Cost' onChange={((e)=>(handleChange(e, 'cost', index)))} 
-            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            required/>
-          </div>
-          {/* details */}
-          <div className='flex gap-2 p-1'>
-            <h2 className='font-medium'>Details</h2>
-            <textarea
-            type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleChange(e, 'details', index)))} 
-            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            />
-          </div>
-          </div>
-          ))}
+              {/* cost */}
+              <div className='flex gap-2 p-1'>
+                <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
+                <input 
+                type='number' value={i.cost} min={0} placeholder='Cost' onChange={((e)=>(handleChange(e, 'cost', index)))} 
+                className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+                required/>
+              </div>
+              {/* details */}
+              <div className='flex gap-2 p-1'>
+                <h2 className='font-medium'>Details</h2>
+                <textarea
+                type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleChange(e, 'details', index)))} 
+                className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+                />
+              </div>
+              </div>
+              ))}
+            </div>
+          )}
           <div className='flex items-center gap-5 p-2 justify-center'>
             {formData?.infos?.length>0 && <div className='flex items-center justify-center text-blue-500'>
             {formData?.infos?.length > startIndex &&
@@ -582,8 +619,11 @@ const EditItem = ({itemId}) => {
           </div>
         </div>
           {isPreviewCard && formData?.thumbnails[selectedImageIndex]?.image && <PreviewImage image={formData?.thumbnails[selectedImageIndex]?.image} setIsOpen={setIsPreviewCard}/>}  
+        </div>
+      )
+      }
     </div>
   )
 }
 
-export default EditItem
+export default EditItem  

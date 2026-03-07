@@ -246,7 +246,7 @@ router.post("/developer", async(req, res)=>{
 })
 
 //edit items from dev dashboard
-router.put('/developer/full/:item_id', upload.array("newImages"), async (req, res)=>{
+router.put('/developer/full/:item_id', async (req, res)=>{
   const client = await pool.connect()
   const errorMessage = []
     try {
@@ -356,33 +356,7 @@ router.put('/developer/full/:item_id', upload.array("newImages"), async (req, re
         WHERE info_id = $4`, 
         [info.qty, info.cost, info.details, info.info_id])
     }
-
-// [
-//     {
-//         "id": "7e0abb54-d6b6-43bf-bee7-fdf7e2476565",
-//         "qty": 5,
-//         "cost": "224.88",
-//         "details": "Phasellus in felis."
-//     },
-//     {
-//         "id": "",
-//         "qty": 8,
-//         "cost": "8.88",
-//         "details": "Phasellus in felis."
-//     },
-//     {
-//         "id": "",
-//         "qty": 5,
-//         "cost": "224.88",
-//         "details": ""
-//     },
-//     {
-//         "id": "",
-//         "qty": "0",
-//         "cost": "0",
-//         "details": ""
-//     }
-// ]
+    
     //create info
     console.log(newlyCreatedInfos)
     for(let info of newlyCreatedInfos){
@@ -390,9 +364,9 @@ router.put('/developer/full/:item_id', upload.array("newImages"), async (req, re
     }
 
     //delete info
-    // for(let infoId of deletedInfos){
-    //   await client.query(`UPDATE infos SET is_active = false WHERE info_id = $1`, [infoId])
-    // }
+    for(let infoId of deletedInfos){
+      await client.query(`UPDATE infos SET is_active = false WHERE info_id = $1`, [infoId])
+    }
 
 
     //==================
