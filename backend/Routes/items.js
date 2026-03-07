@@ -246,15 +246,15 @@ router.post("/developer", async(req, res)=>{
 })
 
 //edit items from dev dashboard
-router.put('/developer/full/:item_id', async (req, res)=>{
+router.put('/developer/full/:item_id', upload.array("image"), async (req, res)=>{
   const client = await pool.connect()
   const errorMessage = []
     try {
     const {item_id} = req.params
     const {name, description, source_id} = req.body
-    let category = req.body.category ? JSON.parse(req.body.category) : null
-    const submittedInfos = JSON.parse(req.body.infos || "[]")
-    const submittedThumbnails = JSON.parse(req.body.thumbnails || "[]")
+    let category = req.body.category ? JSON.parse(req.body.category) : {}
+    const submittedInfos = req.body.infos ? JSON.parse(req.body.infos) : [] 
+    const submittedThumbnails = req.body.thumbnails ? JSON.parse(req.body.thumbnails) : []
 
 
     //=============
@@ -269,22 +269,22 @@ router.put('/developer/full/:item_id', async (req, res)=>{
     if(!name) {
       errorMessage.push("Item name required")
       await client.query("ROLLBACK")
-      return res.status(400).json("Item name required")
+      return res.status(409).json("Item name required")
     }
     if(!description) {
       errorMessage.push("Item description required")
       await client.query("ROLLBACK")
-      return res.status(400).json("Item description required")
+      return res.status(409).json("Item description required")
     }
     if(!item_id) {
       errorMessage.push("Item ID required")
       await client.query("ROLLBACK")
-      return res.status(400).json("Item ID required")
+      return res.status(409).json("Item ID required")
     }
     if(!source_id) {
       errorMessage.push("Source required")
       await client.query("ROLLBACK")
-      return res.status(400).json("Source required")
+      return res.status(409).json("Source required")
     }
 
     //===========
@@ -340,11 +340,9 @@ router.put('/developer/full/:item_id', async (req, res)=>{
     //Handle infos
     //============
     const allInfos = await client.query(`SELECT info_id, qty, cost, details FROM infos WHERE item_id = $1`, [item_id])
-    const dbInfos = allInfos.rows.map((info)=>info.info_id)
-    const submittedInfosIds = submittedInfos.filter((info)=>info.info_id).map((i)=>i.info_id)
-    const newlyCreatedInfos = submittedInfos.filter((i)=>!i.info_id && i.info_id !== dbInfos.includes(i.info_id))
-    const updatedInfos = submittedInfos.filter((info)=> info.info_id  && dbInfos.includes(info.info_id))
-    const deletedInfos = dbInfos.filter((info)=> !submittedInfosIds.includes(info.info_id))
+    const newlyCreatedInfos = submittedInfos.filter((info)=> info?.status === "inserted")
+    const updatedInfos = submittedInfos.filter((info)=> info?.status === "changed")
+    const deletedInfos = submittedInfos.filter((info)=> info?.status === "deleted")
 
     //update info
     for(let info of updatedInfos){
@@ -358,7 +356,6 @@ router.put('/developer/full/:item_id', async (req, res)=>{
     }
     
     //create info
-    console.log(newlyCreatedInfos)
     for(let info of newlyCreatedInfos){
       await client.query(`INSERT INTO infos (qty, cost, details, item_id) VALUES ($1, $2, $3, $4)`, [info.qty, info.cost, info.details, item_id])
     }
@@ -373,11 +370,9 @@ router.put('/developer/full/:item_id', async (req, res)=>{
     //Handle thumbnails
     //==================
     const AllThumbnails = await client.query(`SELECT image_id, image FROM thumbnails WHERE item_id = $1`, [item_id])
-    const dbThumbnailsIds = AllThumbnails.rows.map((thumb)=>thumb.image_id)
-    const submittedThumbnailIds = submittedThumbnails.filter((i)=>i.image_id).map((i)=>i.image_id)
-    const newlyCreatedThumb = submittedThumbnails.filter((i)=> !i.image_id || i.image_id !== dbThumbnailsIds.includes(i.image_id))
-    const updatedThumb = submittedThumbnails.filter((image)=> image.image_id && dbThumbnailsIds.includes(image.image_id))
-    const deletedThumb = dbThumbnailsIds.filter((id)=> !submittedThumbnailIds.includes(id))
+    const newlyCreatedThumb = submittedThumbnails.filter((th)=> th?.status === "inserted")
+    const updatedThumb = submittedThumbnails.filter((th)=> th?.status === "updated")
+    const deletedThumb = submittedInfos.filter((id)=> th?.status === "deleted")
     
     //update thumbnails
     for(let thumb of updatedThumb){
@@ -392,8 +387,8 @@ router.put('/developer/full/:item_id', async (req, res)=>{
     }
 
     //delete thumbnails
-    for(let thumbId of deletedThumb){
-      await client.query(`DELETE FROM thumbnails WHERE image_id = $1`, [thumbId])
+    for(let thumb of deletedThumb){
+      await client.query(`DELETE FROM thumbnails WHERE image_id = $1`, [thumb?.image_id])
     }
 
     //final result

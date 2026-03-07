@@ -76,7 +76,7 @@ const EditItem = ({itemId}) => {
     const update = []
     if(!files) return
     for(let i=0; i < files.length; i++){
-        update.push({image_id:"", image: URL.createObjectURL(files[i]), file: files[i]})
+        update.push({image_id:"", image: URL.createObjectURL(files[i]), file: files[i], status: "inserted"})
     } 
     setFormData((prev)=>({...prev, thumbnails: [...prev.thumbnails, ...update]}))
     e.target.value=""
@@ -89,15 +89,26 @@ const EditItem = ({itemId}) => {
     e.target.value=""
   }
 
-  const handleDeleteImage = (index) =>{
-        setFormData((prev)=>({...prev, thumbnails: prev.thumbnails.filter((_, i)=> i !== index)}))
+  const handleDeleteImage = (originalIndex) =>{
+        setFormData((prev)=>({...prev, thumbnails: 
+          prev.thumbnails.map((th, index)=> 
+          index === originalIndex ?
+            {...th, status: "deleted"}
+            : th
+        )}))
   }
 
   const handleEditImage = (e, index)=>{
     const file= e.target.files[0]
     if(!file) return;
-    const update = {image_id:"", image: URL.createObjectURL(file), file}  
-    setFormData((prev)=>({...prev, thumbnails: prev.thumbnails.map((img, i)=>( i === index ? update : img))}))
+    setFormData((prev)=>({...prev, thumbnails: 
+      prev.thumbnails.map((img, i)=>( i === index ? 
+        {...img, 
+          image: URL.createObjectURL(file), 
+          file, 
+          status: "changed"} 
+      : img)
+    )}))
   }
 
   const handleRadio = (e, input, type)=>{
@@ -123,7 +134,7 @@ const EditItem = ({itemId}) => {
 
   const addNewBlock = ()=>{
     if(isValid(newInfoData[newInfoData.length-1])){
-        setNewInfoData((prev)=>([...prev, {id: "", qty: "", cost: "", details: ""}]))
+        setNewInfoData((prev)=>([...prev, {id: "", qty: "", cost: "", details: "", status: "empty"}]))
         setErrorMessage({info:"", thumbnail: "", item: ""})
     }
     else setErrorMessage((prev)=>({...prev, info: "Empty field found!"}))
@@ -141,12 +152,18 @@ const EditItem = ({itemId}) => {
   }
 
   const handleNewDelInfo = (index) =>{
-    const updateNew = newInfoData.filter((_, i)=> i !== index)
+    // const updateNew = newInfoData.filter((_, i)=> i !== index)
     if(newInfoData.length < 2){
+      addNewBlock()
       setErrorMessage(prev=>({...prev, info: "Fill this info or leave it empty"}))
     }
     else {
-      setNewInfoData(updateNew)
+      setNewInfoData((prev)=>prev.map((info, ind)=>
+        index === ind ?
+          {...info,  status: "deleted"}
+          : info
+      )
+      )
       setErrorMessage({info:"", thumbnail: "", item: ""})
     }
   }
@@ -178,42 +195,14 @@ const EditItem = ({itemId}) => {
     setDisplayNum(startIndex)
     setErrorForm({status: true, message: "Reset successful", type: "reset"})
   }
-
-  const ItemDetails = async()=>{
-    setLoading(true)
-    try {
-      const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
-      const holdData = response.data[0]        
-      const processData = (data) =>{
-          return ({
-            ...data, 
-            infos: data.infos?.map((i)=>(
-              {...i, status: "unchaged"}
-            )),
-            thumbnails: data.thumbnails?.map((th)=>(
-              {...th, status: "unchaged"}
-            ))
-          })
-      }
-      const newData = processData(holdData)
-      setFormData(structuredClone(newData))
-      setBackupData(structuredClone(newData))
-      } 
-      catch (error) {
-      console.log(`Unable to fetch the item details: ${error}`)
-    }
-    finally{
-      setLoading(false)
-    }
-  }
-
-    const isValid = (elt)=>{
-      return (
-        elt.qty && elt.qty !== null && elt.qty !== "" &&
-        elt.cost && elt.cost !== null && elt.cost !== "" &&
-        elt.details && elt.details !== null && elt.details !== ""
-      )
-    }    
+  
+  const isValid = (elt)=>{
+    return (
+      elt.qty && elt.qty !== null && elt.qty !== "" &&
+      elt.cost && elt.cost !== null && elt.cost !== "" &&
+      elt.details && elt.details !== null && elt.details !== ""
+    )
+   }    
   
   const SubmitForm = ()=>{
     setErrorForm(null)
@@ -230,7 +219,7 @@ const EditItem = ({itemId}) => {
     //handle info 
     //==============
     let fillNewInfo = []
-    let mainInfoArray = formData?.infos
+    let mainInfoArray = [...formData.infos]
 
     const isDuplicate = (newInfo)=>{
       return(
@@ -261,17 +250,51 @@ const EditItem = ({itemId}) => {
   
   const putSubmitItem = async () =>{
     try {
-      const response = await axios.put(`${API_URL}/items/developer/full/${itemId}`,{
-        name: formData?.name,
-        description: formData?.description,
-        source_id: formData?.source?.id,
-        category: formData?.category,
-        infos: formData?.infos,
-        thumbnails: formData?.thumbnails
-      })
+      const alteredInfos = formData?.infos?.filter((info)=> info?.status !== "unchanged") || []
+      const alteredThumbnails = formData?.thumbnails?.filter((th)=> th?.status !== "unchanged") || []
+      
+      const formDataToSend = new FormData()
+
+      formDataToSend.append('name', formData?.name || '')
+      formDataToSend.append('description',formData?.description || '')
+      formDataToSend.append('source_id', formData?.source?.id)
+      formDataToSend.append('category', JSON.stringify(formData?.category))
+      formDataToSend.append('infos', JSON.stringify(alteredInfos))
+      formDataToSend.append('thumbnails', JSON.stringify(alteredThumbnails))
+      
+      const response = await axios.put(`${API_URL}/items/developer/full/${itemId}`, formDataToSend)
       setErrorForm(response.data)
+      await ItemDetails()
     } catch (error) {
       setErrorForm(error)
+    }
+  }
+
+  const ItemDetails = async()=>{
+    setLoading(true)
+    try {
+      const response = await axios.get(`${API_URL}/items/developer/${itemId}`)
+      const holdData = response.data[0]        
+      const processData = (data) =>{
+          return ({
+            ...data, 
+            infos: data.infos?.map((i)=>(
+              {...i, status: "unchanged"}
+            )),
+            thumbnails: data.thumbnails?.map((th)=>(
+              {...th, status: "unchanged"}
+            ))
+          })
+      }
+      const newData = processData(holdData)
+      setFormData(structuredClone(newData))
+      setBackupData(structuredClone(newData))
+      } 
+      catch (error) {
+      console.log(`Unable to fetch the item details: ${error}`)
+    }
+    finally{
+      setLoading(false)
     }
   }
   
@@ -295,7 +318,7 @@ const EditItem = ({itemId}) => {
 
   useEffect(()=>{
     const lastElement = newInfoData[newInfoData.length-1]
-    if(lastElement?.qty && lastElement?.cost && lastElement?.details)
+    if(lastElement?.qty && isValid(lastElement))
       addNewBlock()
   },[newInfoData])
 
@@ -494,7 +517,7 @@ const EditItem = ({itemId}) => {
               <div className='flex gap-2 p-1'>
                 <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
                 <input 
-                type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e, 'qty', index)))} 
+                type='number' min={1} step={1} value={i.qty} placeholder='Quantity' onChange={((e)=>(handleChange(e, 'qty', i?.originalIndex)))} 
                 className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
                 required/>
               </div>
@@ -502,7 +525,7 @@ const EditItem = ({itemId}) => {
               <div className='flex gap-2 p-1'>
                 <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
                 <input 
-                type='number' value={i.cost} min={0} placeholder='Cost' onChange={((e)=>(handleChange(e, 'cost', index)))} 
+                type='number' value={i.cost} min={0} placeholder='Cost' onChange={((e)=>(handleChange(e, 'cost', i?.originalIndex)))} 
                 className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
                 required/>
               </div>
@@ -510,7 +533,7 @@ const EditItem = ({itemId}) => {
               <div className='flex gap-2 p-1'>
                 <h2 className='font-medium'>Details</h2>
                 <textarea
-                type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleChange(e, 'details', index)))} 
+                type='text' value={i.details} placeholder='Details ' onChange={((e)=>(handleChange(e, 'details', i?.originalIndex)))} 
                 className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
                 />
               </div>
@@ -542,42 +565,52 @@ const EditItem = ({itemId}) => {
                 <p className='text-center'>{errorMessage?.info}</p>
             </div>          
           )}
-          {newInfoData?.map((i, index)=>(
-            <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
-              <div className='flex justify-between px-2 p-1 text-sm'>
-                <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{formData?.infos?.length+index+1 || 0}</p>
-                <Trash onClick={()=>(handleNewDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
-              </div>
-         
-          {/* Qty */}
-          <div className='flex gap-2 p-1'>
-            <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
-            <input 
-            type='number' min={1} step={1} value={i?.qty} placeholder='Quantity' onChange={((e)=>(handleNewInfoChange(e, 'qty', index)))} 
-            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            required/>
-          </div>
-          {/* cost */}
-          <div className='flex gap-2 p-1'>
-            <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
-            <input 
-            type='number' value={i?.cost} min={0} placeholder='Cost' onChange={((e)=>(handleNewInfoChange(e, 'cost', index)))} 
-            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            required/>
-          </div>
-          {/* details */}
-          <div className='flex gap-2 p-1'>
-            <h2 className='font-medium'>Details</h2>
-            <textarea
-            type='text' value={i?.details} placeholder='Details ' onChange={((e)=>(handleNewInfoChange(e, 'details', index)))} 
-            className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
-            />
-          </div>
-          </div>
-          ))}
+        {
+          newInfoData?.filter((info)=>info?.status !== "deleted")?.length === 0 ?
+            (
+            <p className={`text-gray-600 bg-gray-100/60 flex items-center justify-center w-full p-1 text-sm text-center min-h-30`}>No page found!</p>
+            )
+            :(
+             newInfoData?.filter((info)=>info?.status !== "deleted")?.map((i, index)=>(
+              <div>
+                <div key={index} className={`border-t relative border-blue-200 transition-all duration-700 ease-in-out`}>
+                      
+                  <div className='flex justify-between px-2 p-1 text-sm'>
+                    <p className='bg-blue-400 border border-gray-600 text-white p-1 w-5 h-5 flex items-center justify-center rounded-full'>{formData?.infos?.length+index+1 || 0}</p>
+                    <Trash onClick={()=>(handleNewDelInfo(index))} className='text-red-500 text-center w-5 h-5 cursor-pointer'/>
+                  </div>
+
+                  {/* Qty */}
+                  <div className='flex gap-2 p-1'>
+                    <h2 className='flex gap-1 font-medium'>Quantity <span className='text-red-500'>*</span></h2>
+                    <input 
+                    type='number' min={1} step={1} value={i?.qty} placeholder='Quantity' onChange={((e)=>(handleNewInfoChange(e, 'qty', index)))} 
+                    className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+                    required/>
+                  </div>
+                  {/* cost */}
+                  <div className='flex gap-2 p-1'>
+                    <h2 className='font-medium'>Cost <span className='text-red-500'>*</span></h2>
+                    <input 
+                    type='number' value={i?.cost} min={0} placeholder='Cost' onChange={((e)=>(handleNewInfoChange(e, 'cost', index)))} 
+                    className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+                    required/>
+                  </div>
+                  {/* details */}
+                  <div className='flex gap-2 p-1'>
+                    <h2 className='font-medium'>Details</h2>
+                    <textarea
+                    type='text' value={i?.details} placeholder='Details ' onChange={((e)=>(handleNewInfoChange(e, 'details', index)))} 
+                    className={`focus:ring-2 flex-1 border border-gray-300 rounded-sm outline-none ring-blue-500 bg-gray-100 px-2 text-gray-800` }
+                    />
+                  </div>
+                  </div>
+                </div>
+              ))
+            )
+          }
         </div>)}
         </div>
-
       </div>
 
       {/*-----------------------------------------
@@ -586,7 +619,7 @@ const EditItem = ({itemId}) => {
 
       <div className='w-full'>
           <div className='flex items-center justify-between '>
-            <p className='text-blue-500'>Thumbnails (<span className='text-green-500'>{formData?.thumbnails?.length || 0})</span> <span className='text-red-500'>*</span></p>
+            <p className='text-blue-500'>Thumbnails (<span className='text-green-500'>{formData?.thumbnails?.filter((th)=>th?.status !== "deleted")?.length || 0})</span> <span className='text-red-500'>*</span></p>
             <label
               className='flex flex-col items-center justify-center rounded-md text-green-500'>
                   <input type='file' multiple accept='image/*' className='hidden'
@@ -595,14 +628,14 @@ const EditItem = ({itemId}) => {
             </label>          
           </div>
           <div className='flex border border-gray-200 p-1 gap-3 w-full m-1 h-60 overflow-x-auto'>
-            {formData?.thumbnails?.length > 0 ? (
+            {formData?.thumbnails?.filter((th)=>th?.status !== "deleted")?.length > 0 ? (
               <div className='flex gap-2 p-1'>
-                {formData?.thumbnails?.map((i, index)=>(
+                {formData?.thumbnails?.map((th, originalIndex)=>({...th, originalIndex}))?.filter((th)=>th?.status !== "deleted")?.map((i, index)=>(
                 <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
                     <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} 
                     src={i?.image_id ? `${BASE_URL}/${i?.image}` : i?.image} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
                     <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
-                      <X onClick={()=>(handleDeleteImage(index))} size='25' className='text-red-500'/>
+                      <X onClick={()=>(handleDeleteImage(i?.originalIndex))} size='25' className='text-red-500'/>
                       <label>
                         <Edit2 size='20' className='text-green-500'/>
                         <input onChange={(e)=>(handleEditImage(e, index))} multiple type='file' accept='image/*' className='bg-red-500 hidden w-5' />
