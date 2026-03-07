@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
             i.name,
             (SELECT c1.category_name FROM categories c1 
             WHERE i.category_id = c1.category_id) AS category, i.liked,
-            (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id ORDER BY th.image_id LIMIT 1) AS thumbnail,
+            (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id AND th.is_active = true ORDER BY th.image_id LIMIT 1) AS thumbnail,
             (SELECT json_build_object(
               'info_id', inf.info_id,
               'qty', inf.qty,
@@ -73,7 +73,7 @@ router.get("/developer", async (req, res)=>{
     query = `
         SELECT i.item_id, i.name, i.description, i.created_at::DATE AS date, i.created_at::TIME AS time,
         s.source_name AS source,
-        (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id LIMIT 1) AS images,
+        (SELECT th.image FROM thumbnails th WHERE th.item_id = i.item_id AND is_active = true LIMIT 1) AS images,
         cat2.category_name
         FROM items i 
         LEFT JOIN sources s ON s.source_id = i.source_id
@@ -129,7 +129,7 @@ router.get('/:id', async (req, res) => {
               'image_id', th.image_id,
               'image', th.image
             )
-          ) FILTER (WHERE th.image_id IS NOT NULL),
+          ) FILTER (WHERE th.image_id IS NOT NULL AND th.is_active = true),
           '[]'
         ) AS thumbnails,
 		CASE WHEN o.order_id IS NULL THEN 
@@ -160,7 +160,7 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN infos inf ON inf.item_id = i.item_id
       LEFT JOIN orders o ON o.item_id=i.item_id
       WHERE i.item_id = $1 AND inf.is_active = true
-      GROUP BY i.item_id, o.order_id;`;
+      GROUP BY i.item_id, o.order_id;`
 
     const result = await pool.query(query, [id]);
 
@@ -220,7 +220,7 @@ router.get("/developer/:item_id", async(req, res)=>{
               'file', th.image,
               'cost', th.image
             )
-        ) FROM thumbnails th WHERE th.item_id = i.item_id) AS thumbnails
+        ) FROM thumbnails th WHERE th.item_id = i.item_id AND th.is_active = true) AS thumbnails
         FROM items i 
         JOIN sources s ON s.source_id = i.source_id 
         JOIN categories cat ON cat.category_id = i.category_id
@@ -246,16 +246,17 @@ router.post("/developer", async(req, res)=>{
 })
 
 //edit items from dev dashboard
-router.put('/developer/full/:item_id', upload.array("image"), async (req, res)=>{
+router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categoryImage"), async (req, res)=>{
   const client = await pool.connect()
   const errorMessage = []
     try {
     const {item_id} = req.params
     const {name, description, source_id} = req.body
-    let category = req.body.category ? JSON.parse(req.body.category) : {}
+    let category = req.body.categoryMetaData ? JSON.parse(req.body.categoryMetaData) : {}
     const submittedInfos = req.body.infos ? JSON.parse(req.body.infos) : [] 
-    const submittedThumbnails = req.body.thumbnails ? JSON.parse(req.body.thumbnails) : []
-
+    const submittedThumbnails = req.body.thumbnailsMetaData ? JSON.parse(req.body.thumbnailsMetaData) : []
+    const thumbnailsFiles = req.files || []
+    const categoryFile = req.file || null
 
     //=============
     //verification
@@ -287,59 +288,63 @@ router.put('/developer/full/:item_id', upload.array("image"), async (req, res)=>
       return res.status(409).json("Source required")
     }
 
-    //===========
-    //connect
-    //===========
-    await client.query("BEGIN")
+      //===========
+      //connect
+      //===========
+      await client.query("BEGIN")
 
-    //Handle category
-    if(category && !category?.id) {
-        if(!category?.image && category?.name) {
-          errorMessage.push("Category image required")
+      //Handle category
+
+      //verification
+      if(category?.status === "selected") {
+        if(!category?.id){
+          errorMessage.push("Select a category")
           await client.query("ROLLBACK")
-          return res.status(409).json("Category image required")
+          return res.status(409).json("Select a category")
         }
-        if(category?.image && !category?.name) {
-          errorMessage.push("Category name required")
-          await client.query("ROLLBACK")
-          return res.status(409).json("Category name required")
-        }
-        if(!category?.image && !category?.name) {
-          errorMessage.push("Category name and image required")
+      } else {
+        if(!category?.name || !categoryFile.filename) {
+          errorMessage.push("Both category name and image required")
           await client.query("ROLLBACK")
           return res.status(409).json("Category name and image required")
         }
-        const existingCategories = await client.query(`SELECT category_id FROM categories WHERE category_name = $1`, [category?.name])
-        
-        if(existingCategories.rows.length === 0){
-          const imagePath = `/uploads/categories/${category?.image}`
-          const insertCategory = await client.query(`
-            INSERT INTO categories (category_name, image) 
-              VALUES ($1, $2) RETURNING category_id AS id, category_name AS name, image`, [category?.name, imagePath])
-          category = insertCategory.rows[0]
+      }
+      
+      //operations
+      if(category?.status === "inserted"){
+        const dbCategory = await client.query(`SELECT 1 FROM categories WHERE LOWER(category_name) = LOWER($1)`, [category?.name])
+        if(dbCategory.rows.length === 0){
+            const imagePath = `/uploads/categories/${categoryFile.filename}`
+            const insertCategory = await client.query(`
+              INSERT INTO categories (category_name, image) 
+                VALUES ($1, $2) RETURNING category_id AS id, category_name AS name, image`, [category?.name, imagePath])
+            category = insertCategory.rows[0]
         }
         else {
           errorMessage.push
-
           ("Category name already existing")
           await client.query("ROLLBACK")
           return res.status(400).json("Category name already existing")
         }
-    }
+      }
+      else if(category?.status === "selected"){
+        const UpdateCategory = await client.query(`
+            UPDATE items SET category_id = COALESCE($1, category_id) 
+            WHERE item_id = $2`, [category?.id, item_id])
+      }
         
-    await client.query(`
-        UPDATE items SET 
-          name = COALESCE($1, name), 
-          description = COALESCE($2, description),
-          category_id = COALESCE($3, category_id),
-          source_id = COALESCE($4, source_id)
-          WHERE item_id = $5`,
-      [name, description, category?.id, source_id, item_id])
+      await client.query(`
+          UPDATE items SET 
+            name = COALESCE($1, name), 
+            description = COALESCE($2, description),
+            source_id = COALESCE($4, source_id)
+            WHERE item_id = $5`,
+        [name, description, source_id, item_id])
 
     //============
     //Handle infos
     //============
-    const allInfos = await client.query(`SELECT info_id, qty, cost, details FROM infos WHERE item_id = $1`, [item_id])
+    const allInfos = await client.query(`SELECT info_id, qty, cost, details FROM infos WHERE item_id = $1 AND is_active = true`, [item_id])
     const newlyCreatedInfos = submittedInfos.filter((info)=> info?.status === "inserted")
     const updatedInfos = submittedInfos.filter((info)=> info?.status === "changed")
     const deletedInfos = submittedInfos.filter((info)=> info?.status === "deleted")
@@ -357,7 +362,8 @@ router.put('/developer/full/:item_id', upload.array("image"), async (req, res)=>
     
     //create info
     for(let info of newlyCreatedInfos){
-      await client.query(`INSERT INTO infos (qty, cost, details, item_id) VALUES ($1, $2, $3, $4)`, [info.qty, info.cost, info.details, item_id])
+      if(allInfos.rows.filter((i)=> i?.qty !== info.qty && i?.cost !== info.cost && i?.details !== info.details))
+        await client.query(`INSERT INTO infos (qty, cost, details, item_id) VALUES ($1, $2, $3, $4)`, [info.qty, info.cost, info.details, item_id])
     }
 
     //delete info
@@ -369,20 +375,20 @@ router.put('/developer/full/:item_id', upload.array("image"), async (req, res)=>
     //==================
     //Handle thumbnails
     //==================
-    const AllThumbnails = await client.query(`SELECT image_id, image FROM thumbnails WHERE item_id = $1`, [item_id])
+    const AllThumbnails = await client.query(`SELECT image_id, image FROM thumbnails WHERE item_id = $1 AND is_active = true`, [item_id])
     const newlyCreatedThumb = submittedThumbnails.filter((th)=> th?.status === "inserted")
     const updatedThumb = submittedThumbnails.filter((th)=> th?.status === "updated")
-    const deletedThumb = submittedInfos.filter((id)=> th?.status === "deleted")
+    const deletedThumb = submittedThumbnails.filter((id)=> th?.status === "deleted")
     
     //update thumbnails
     for(let thumb of updatedThumb){
-      const imagePath = `/uploads/thumbnails/${thumb.image}`
+      const imagePath = `/uploads/thumbnails/${thumbnailsFiles[thumb?.imageIndexToSend]}`
       await client.query(`UPDATE thumbnails SET image = COALESCE($1, image) WHERE image_id = $2`, [imagePath, thumb.image_id])
     }
 
     //create thumbnails
     for(let thumb of newlyCreatedThumb){
-      const imagePath = `/uploads/thumbnails/${thumb.image}`
+      const imagePath = `/uploads/thumbnails/${thumbnailsFiles[thumb?.imageIndexToSend]}`
       await client.query(`INSERT INTO thumbnails (image, item_id) VALUES ($1, $2)`, [imagePath, item_id])
     }
 

@@ -23,7 +23,7 @@ router.get("/", async(req, res)=>{
             json_build_object(
                 'qty', o.order_qty, 
                 'cost', inf2.cost, 
-                'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id)
+                'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id AND inf2.is_active = true)
 		AS info		
         FROM items i
 		JOIN orders o ON o.item_id=i.item_id	`

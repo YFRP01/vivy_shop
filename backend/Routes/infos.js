@@ -71,7 +71,7 @@ router.delete("/developer/:info_id", async(req, res)=>{
     try {
         const {info_id, item_id} = req.params
         const checkExistance = await pool.query(`
-            SELECT 1 FROM infos WHERE info_id = $1`,[info_id])    
+            SELECT 1 FROM infos WHERE info_id = $1 AND is_active = true`,[info_id])    
         if(checkExistance.rows.length < 1){
             return res.status(404).json(`The info doesn't exist`)
         }

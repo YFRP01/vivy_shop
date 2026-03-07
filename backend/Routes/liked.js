@@ -23,13 +23,13 @@ router.get("/", async(req, res)=>{
 				'qty',inf1.qty, 
 				'cost', inf1.cost,
 				'details', inf1.details
-				) FROM infos inf1 LIMIT 1)
+				) FROM infos inf1 WHERE inf1.is_active = true LIMIT 1)
 		ELSE
 		(SELECT 
 			json_build_object(
 				'qty', o.order_qty, 
 				'cost', inf2.cost, 
-				'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id LIMIT 1)
+				'details', inf2.details) FROM infos inf2 WHERE o.info_id=inf2.info_id AND inf2.is_active = true LIMIT 1)
 		END AS info		
         FROM items i
 		LEFT JOIN orders o ON o.item_id=i.item_id                 

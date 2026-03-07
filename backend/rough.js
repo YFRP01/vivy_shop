@@ -69,7 +69,7 @@ const queries = (main, category, query) => {
                 'cost', inf.cost,
                 'details', inf. details
         )
-        FROM infos inf WHERE inf.info_id=o.info_id) AS info,`
+        FROM infos inf WHERE inf.info_id=o.info_id AND inf.is_active = true) AS info,`
 
     const objectQueryordered = `
         json_build_object(

@@ -7,7 +7,7 @@ const router = Router()
 
 router.get("/", async(req, res)=>{
     try {
-        const response = await pool.query(`SELECT * FROM thumbnails`)
+        const response = await pool.query(`SELECT * FROM thumbnails WHERE is_active = true`)
         res.status(200).json(response.rows)        
     } catch (error) {
         res.status(500).json(`Unablee to get thumbnails: ${error.message}`)
@@ -17,7 +17,7 @@ router.get("/", async(req, res)=>{
 router.get("/developer/:item_id", async(req, res)=>{
     try {
         const {item_id} = req.params
-        const response = await pool.query(`SELECT * FROM thumbnails WHERE item_id=$1`, [item_id])
+        const response = await pool.query(`SELECT * FROM thumbnails WHERE item_id=$1 AND is_active = true`, [item_id])
         res.status(200).json(response.rows)        
     } catch (error) {
         res.status(500).json(`Unable to get thumbnails of the item: ${error.message}`)

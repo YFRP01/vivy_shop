@@ -6,6 +6,7 @@ import { AlertCircle, ChevronDown, ChevronUp, CircleAlert, Columns, Edit, Edit2,
 import PreviewImage from './PreviewImage'
 import Loading from './Loading'
 import NotFoundPage from './NotFoundPage'
+import { preview } from 'vite'
 
 const EditItem = ({itemId}) => {
 
@@ -32,7 +33,7 @@ const EditItem = ({itemId}) => {
     infos: [],
     thumbnails: []
   })
-  const [backUpData, setBackupData] = useState(JSON.parse(JSON.stringify(formData)))
+  const [backUpData, setBackupData] = useState((structuredClone(formData)))
   
   const [newInfoData, setNewInfoData] = useState([
     {
@@ -76,7 +77,7 @@ const EditItem = ({itemId}) => {
     const update = []
     if(!files) return
     for(let i=0; i < files.length; i++){
-        update.push({image_id:"", image: URL.createObjectURL(files[i]), file: files[i], status: "inserted"})
+        update.push({image_id:"", preview: URL.createObjectURL(files[i]), file: files[i], status: "inserted"})
     } 
     setFormData((prev)=>({...prev, thumbnails: [...prev.thumbnails, ...update]}))
     e.target.value=""
@@ -104,7 +105,7 @@ const EditItem = ({itemId}) => {
     setFormData((prev)=>({...prev, thumbnails: 
       prev.thumbnails.map((img, i)=>( i === index ? 
         {...img, 
-          image: URL.createObjectURL(file), 
+          preview: URL.createObjectURL(file), 
           file, 
           status: "changed"} 
       : img)
@@ -182,7 +183,7 @@ const EditItem = ({itemId}) => {
   }
 
   const resetForm = ()=>{
-    setFormData(JSON.parse(JSON.stringify(backUpData)))
+    setFormData((JSON.stringify(backUpData)))
     setNewInfoData([{id: "", qty: "", cost: "", details: ""}])
     setViewCategoryModal(false)
     setHandWrittenCategoryName('')
@@ -211,7 +212,7 @@ const EditItem = ({itemId}) => {
     //===============
     if(viewCat) {
         if(handWrittenCategoryName.trim() && handWrittenCategoryThumbnail) {
-          setFormData(prev=>({...prev, category: {id: "",name: handWrittenCategoryName, image: handWrittenCategoryThumbnail}}))
+          setFormData(prev=>({...prev, category: {name: handWrittenCategoryName, image: handWrittenCategoryThumbnail}}))
         }
         else {setErrorMessage(prev=>({...prev, item: "Empty category fields detected for creation"}))}
     }
@@ -250,18 +251,40 @@ const EditItem = ({itemId}) => {
   
   const putSubmitItem = async () =>{
     try {
-      const alteredInfos = formData?.infos?.filter((info)=> info?.status !== "unchanged") || []
-      const alteredThumbnails = formData?.thumbnails?.filter((th)=> th?.status !== "unchanged") || []
-      
+      let files = []
+      const thumbnailsMetaData = []
       const formDataToSend = new FormData()
+
+      //handle category
+      let categoryMetaData = {}
+      let categoryImage = null
+      if(viewCat){
+        categoryMetaData = {name: formData?.category?.name, status: "inserted"}
+        categoryImage = formData?.category?.image
+      }
+      else{
+        categoryMetaData = {id: formData?.category?.id, status: "selected"}
+      }
+      //handle info
+      const alteredInfos = formData?.infos?.filter((info)=> info?.status !== "unchanged" || info?.status !== "empty") || []
+      //handle thumbnails 
+      const alteredThumbnails = formData?.thumbnails?.filter((th)=> th?.status !== "unchanged") || []
+      alteredThumbnails.map((th)=>{
+        const imageIndexToSend = files.length
+        files.push(th.file)
+        thumbnailsMetaData.push(th.image_id, th.status, imageIndexToSend)
+      })
 
       formDataToSend.append('name', formData?.name || '')
       formDataToSend.append('description',formData?.description || '')
       formDataToSend.append('source_id', formData?.source?.id)
-      formDataToSend.append('category', JSON.stringify(formData?.category))
+      formDataToSend.append('categoryMetaData', JSON.stringify(categoryMetaData))
+      formDataToSend.append('categoryImage', categoryImage)
       formDataToSend.append('infos', JSON.stringify(alteredInfos))
-      formDataToSend.append('thumbnails', JSON.stringify(alteredThumbnails))
-      
+      formDataToSend.append('thumbnailsMetaData', JSON.stringify(thumbnailsMetaData))
+      formDataToSend.append('ThumbnailsImages', categoryImage)
+
+      //submit endpoint call
       const response = await axios.put(`${API_URL}/items/developer/full/${itemId}`, formDataToSend)
       setErrorForm(response.data)
       await ItemDetails()
@@ -282,13 +305,14 @@ const EditItem = ({itemId}) => {
               {...i, status: "unchanged"}
             )),
             thumbnails: data.thumbnails?.map((th)=>(
-              {...th, status: "unchanged"}
+              {...th, path: th.image,status: "unchanged"}
             ))
           })
-      }
+      }      
       const newData = processData(holdData)
       setFormData(structuredClone(newData))
       setBackupData(structuredClone(newData))
+      console.log(formData.thumbnails);
       } 
       catch (error) {
       console.log(`Unable to fetch the item details: ${error}`)
@@ -633,7 +657,7 @@ const EditItem = ({itemId}) => {
                 {formData?.thumbnails?.map((th, originalIndex)=>({...th, originalIndex}))?.filter((th)=>th?.status !== "deleted")?.map((i, index)=>(
                 <div key={index} className='relative flex flex-col items-center justify-center w-50 rounded-md text-gray-600 border border-gray-400 bg-white'>
                     <img onClick={()=>(setSelectedImageIndex(index), setIsPreviewCard(true))} 
-                    src={i?.image_id ? `${BASE_URL}/${i?.image}` : i?.image} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
+                    src={i?.preview || `${BASE_URL}${i?.path}`} alt={`preview ${index+1}`} className='w-full h-full object-cover border border-gray-200'/>
                     <div className='absolute top-0 left-0 flex justify-end gap-2 p-2 items-center right-0 w-full h-5'>
                       <X onClick={()=>(handleDeleteImage(i?.originalIndex))} size='25' className='text-red-500'/>
                       <label>
