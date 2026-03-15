@@ -61,7 +61,7 @@ const Home = () => {
                 <div className='bg-gray-100'>
                     <div className='flex bg-white px-5 overflow-x-scroll h-60 items-center gap-2'>
                         {categories.map((cat)=>(
-                            <div key={cat.category_id} className=''>
+                            <div key={cat.id} className=''>
                                 <CategoryCard cat={cat} />
                             </div>
                         ))}

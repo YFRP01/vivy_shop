@@ -217,8 +217,8 @@ router.get("/developer/:item_id", async(req, res)=>{
          ) FROM infos inf WHERE inf.item_id = i.item_id AND inf.is_active = true) AS infos,
         (SELECT json_agg(
           json_build_object(
-              'file', th.image,
-              'cost', th.image
+              'image_id', th.image_id,
+              'path', th.image
             )
         ) FROM thumbnails th WHERE th.item_id = i.item_id AND th.is_active = true) AS thumbnails
         FROM items i 
@@ -245,8 +245,20 @@ router.post("/developer", async(req, res)=>{
   }
 })
 
+//Edit upload
+const uploadFields = upload.fields([
+  {
+    name: "thumbnailsImages",
+    maxCount: 5,
+  },
+  {
+    name: "categoryImage",
+    maxCount: 1
+  }  
+])
+
 //edit items from dev dashboard
-router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categoryImage"), async (req, res)=>{
+router.put('/developer/full/:item_id', uploadFields, async (req, res)=>{
   const client = await pool.connect()
   const errorMessage = []
     try {
@@ -255,36 +267,31 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
     let category = req.body.categoryMetaData ? JSON.parse(req.body.categoryMetaData) : {}
     const submittedInfos = req.body.infos ? JSON.parse(req.body.infos) : [] 
     const submittedThumbnails = req.body.thumbnailsMetaData ? JSON.parse(req.body.thumbnailsMetaData) : []
-    const thumbnailsFiles = req.files || []
-    const categoryFile = req.file || null
+    const thumbnailsFiles = req.files?.thumbnailsImages || []
+    const categoryFile = req.files?.categoryImage?.[0] || null
 
     //=============
-    //verification
+    //validation
     //=============
     const checkItemExistence = await client.query(`SELECT item_id FROM items WHERE item_id = $1`, [item_id])
     if(checkItemExistence.rows.length === 0) {
       errorMessage.push("Item not found")
-      await client.query("ROLLBACK")
       return res.status(404).json("Item not found")
     }
     if(!name) {
       errorMessage.push("Item name required")
-      await client.query("ROLLBACK")
       return res.status(409).json("Item name required")
     }
     if(!description) {
       errorMessage.push("Item description required")
-      await client.query("ROLLBACK")
       return res.status(409).json("Item description required")
     }
     if(!item_id) {
       errorMessage.push("Item ID required")
-      await client.query("ROLLBACK")
       return res.status(409).json("Item ID required")
     }
     if(!source_id) {
       errorMessage.push("Source required")
-      await client.query("ROLLBACK")
       return res.status(409).json("Source required")
     }
 
@@ -293,7 +300,9 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
       //===========
       await client.query("BEGIN")
 
-      //Handle category
+      //====  
+      // Handle category
+      //====
 
       //verification
       if(category?.status === "selected") {
@@ -303,7 +312,7 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
           return res.status(409).json("Select a category")
         }
       } else {
-        if(!category?.name || !categoryFile.filename) {
+        if(!category?.name || !categoryFile) {
           errorMessage.push("Both category name and image required")
           await client.query("ROLLBACK")
           return res.status(409).json("Category name and image required")
@@ -333,20 +342,20 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
             WHERE item_id = $2`, [category?.id, item_id])
       }
         
-      await client.query(`
-          UPDATE items SET 
-            name = COALESCE($1, name), 
-            description = COALESCE($2, description),
-            source_id = COALESCE($4, source_id)
-            WHERE item_id = $5`,
-        [name, description, source_id, item_id])
+    await client.query(`
+        UPDATE items SET 
+          name = COALESCE($1, name), 
+          description = COALESCE($2, description),
+          source_id = COALESCE($3, source_id)
+          WHERE item_id = $4`,
+      [name, description, source_id, item_id])
 
     //============
     //Handle infos
     //============
     const allInfos = await client.query(`SELECT info_id, qty, cost, details FROM infos WHERE item_id = $1 AND is_active = true`, [item_id])
     const newlyCreatedInfos = submittedInfos.filter((info)=> info?.status === "inserted")
-    const updatedInfos = submittedInfos.filter((info)=> info?.status === "changed")
+    const updatedInfos = submittedInfos.filter((info)=> info?.status === "changed" || info?.status === "updated")
     const deletedInfos = submittedInfos.filter((info)=> info?.status === "deleted")
 
     //update info
@@ -362,7 +371,8 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
     
     //create info
     for(let info of newlyCreatedInfos){
-      if(allInfos.rows.filter((i)=> i?.qty !== info.qty && i?.cost !== info.cost && i?.details !== info.details))
+      const infoDuplicateExists = allInfos.rows.some((i)=> i?.qty === info.qty && i?.cost === info.cost && i?.details === info.details)
+      if(!infoDuplicateExists)
         await client.query(`INSERT INTO infos (qty, cost, details, item_id) VALUES ($1, $2, $3, $4)`, [info.qty, info.cost, info.details, item_id])
     }
 
@@ -375,26 +385,49 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
     //==================
     //Handle thumbnails
     //==================
-    const AllThumbnails = await client.query(`SELECT image_id, image FROM thumbnails WHERE item_id = $1 AND is_active = true`, [item_id])
     const newlyCreatedThumb = submittedThumbnails.filter((th)=> th?.status === "inserted")
-    const updatedThumb = submittedThumbnails.filter((th)=> th?.status === "updated")
-    const deletedThumb = submittedThumbnails.filter((id)=> th?.status === "deleted")
+    const updatedThumb = submittedThumbnails.filter((th)=> th?.status === "updated" || th?.status === "changed")
+    const deletedThumb = submittedThumbnails.filter((th)=> th?.status === "deleted")
     
     //update thumbnails
     for(let thumb of updatedThumb){
-      const imagePath = `/uploads/thumbnails/${thumbnailsFiles[thumb?.imageIndexToSend]}`
+      const thumbFile = thumbnailsFiles[thumb.fileIndex]
+      if(!thumbFile){
+        throw new Error("Thumbnail file missing!");
+      }
+      const old = await client.query(`SELECT image FROM thumbnails WHERE image_id = $1`, [thumb.image_id])
+      const oldPath = old.rows[0]?.image
+      const imagePath = `/uploads/thumbnails/${thumbFile.filename}`
       await client.query(`UPDATE thumbnails SET image = COALESCE($1, image) WHERE image_id = $2`, [imagePath, thumb.image_id])
-    }
+
+      if(oldPath){
+        const fullPath = path.join(__dirname, "..", oldPath)
+          if(fs.existsSync(fullPath)){
+            fs.unlinkSync(fullPath)
+          }
+        }
+      }
 
     //create thumbnails
     for(let thumb of newlyCreatedThumb){
-      const imagePath = `/uploads/thumbnails/${thumbnailsFiles[thumb?.imageIndexToSend]}`
+      const thumbFile = thumbnailsFiles[thumb.fileIndex]
+      if(!thumbFile){
+        throw new Error("Thumbnail file missing!");
+      }
+      const imagePath = `/uploads/thumbnails/${thumbFile.filename}`
       await client.query(`INSERT INTO thumbnails (image, item_id) VALUES ($1, $2)`, [imagePath, item_id])
     }
 
     //delete thumbnails
     for(let thumb of deletedThumb){
-      await client.query(`DELETE FROM thumbnails WHERE image_id = $1`, [thumb?.image_id])
+      const result = await client.query(`DELETE FROM thumbnails WHERE image_id = $1`, [thumb?.image_id])
+      const thumbImge = result.rows[0]?.image
+      if(thumbImge){
+        const fullPath = path.join(__dirname, "..", thumbImge)
+        if(fs.existsSync(fullPath)){
+          fs.unlinkSync(fullPath)
+        }
+      }
     }
 
     //final result
@@ -408,15 +441,16 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
   } catch (error) {
       await client.query("ROLLBACK")
 
-      if(req.files){
-        for(let file of req.files){
+      const uploadFiles = [...(req.files?.thumbnailsImages || []),
+        ...(req.files?.categoryImage || [])]
+        
+        for(let file of uploadFiles){
           const imagePath = path.join(__dirname, "../uploads", file.filename)
           if(fs.existsSync(imagePath)){
             fs.unlinkSync(imagePath)
             console.log(`Cleaned up image: ${file.filename}`)
           }
         }
-      }
       console.log("Error:"+ error.message)
       res.status(500).json({
         status: false,
@@ -428,8 +462,6 @@ router.put('/developer/full/:item_id', upload.array("thumbnailsimages", "categor
       client.release()
     }
 })  
-
-
 
 
 

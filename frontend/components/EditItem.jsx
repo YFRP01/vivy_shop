@@ -6,7 +6,6 @@ import { AlertCircle, ChevronDown, ChevronUp, CircleAlert, Columns, Edit, Edit2,
 import PreviewImage from './PreviewImage'
 import Loading from './Loading'
 import NotFoundPage from './NotFoundPage'
-import { preview } from 'vite'
 
 const EditItem = ({itemId}) => {
 
@@ -183,7 +182,7 @@ const EditItem = ({itemId}) => {
   }
 
   const resetForm = ()=>{
-    setFormData((JSON.stringify(backUpData)))
+    setFormData((structuredClone(backUpData)))
     setNewInfoData([{id: "", qty: "", cost: "", details: ""}])
     setViewCategoryModal(false)
     setHandWrittenCategoryName('')
@@ -268,12 +267,11 @@ const EditItem = ({itemId}) => {
       //handle info
       const alteredInfos = formData?.infos?.filter((info)=> info?.status !== "unchanged" || info?.status !== "empty") || []
       //handle thumbnails 
-      const alteredThumbnails = formData?.thumbnails?.filter((th)=> th?.status !== "unchanged") || []
-      alteredThumbnails.map((th)=>{
+      const alteredThumbnails = formData?.thumbnails?.filter((th)=> th?.status !== "unchanged").map((th)=>{
         const imageIndexToSend = files.length
         files.push(th.file)
-        thumbnailsMetaData.push(th.image_id, th.status, imageIndexToSend)
-      })
+        thumbnailsMetaData.push({image_id: th.image_id, status: th.status, fileIndex: imageIndexToSend})
+      }) || []
 
       formDataToSend.append('name', formData?.name || '')
       formDataToSend.append('description',formData?.description || '')
@@ -282,7 +280,7 @@ const EditItem = ({itemId}) => {
       formDataToSend.append('categoryImage', categoryImage)
       formDataToSend.append('infos', JSON.stringify(alteredInfos))
       formDataToSend.append('thumbnailsMetaData', JSON.stringify(thumbnailsMetaData))
-      formDataToSend.append('ThumbnailsImages', categoryImage)
+      formDataToSend.append('ThumbnailsImages', alteredThumbnails)
 
       //submit endpoint call
       const response = await axios.put(`${API_URL}/items/developer/full/${itemId}`, formDataToSend)
@@ -305,14 +303,13 @@ const EditItem = ({itemId}) => {
               {...i, status: "unchanged"}
             )),
             thumbnails: data.thumbnails?.map((th)=>(
-              {...th, path: th.image,status: "unchanged"}
+              {...th, status: "unchanged"}
             ))
           })
       }      
       const newData = processData(holdData)
       setFormData(structuredClone(newData))
       setBackupData(structuredClone(newData))
-      console.log(formData.thumbnails);
       } 
       catch (error) {
       console.log(`Unable to fetch the item details: ${error}`)
@@ -321,7 +318,7 @@ const EditItem = ({itemId}) => {
       setLoading(false)
     }
   }
-  
+
   const allCategories = async () =>{
     setLoading('')
     try {
